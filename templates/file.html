@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>webls: {{web_path}}</title>
+    % include('styles.html')
+  </head>
+  <body>
+    <main>
+      <h1><code>{{web_path}}</code></h1>
+      <a href="{{dl_url}}">download</a>
+      % if can_display:
+        % if len(file_content) == 0:
+          <p>file is empty</p>
+        % else:
+          <pre>{{file_content}}</pre>
+        % end
+      % else:
+        <p>the contents of the file cannot be displayed</p>
+      % end
+    </main>
+  </body>
+</html>
