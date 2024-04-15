@@ -27,23 +27,23 @@ python -m webls
 
 ## TODO
 
-- `templates/dir.html`/`templates/file.html`
-  - split the "Contents of XXX" into path segments and then make links out of
-    them so that you can navigate to a specific parent directory
-
-- `templates/file.html`
-  - scrollable `<pre>` (both desktop and mobile)
-  - preview file (based on file extension)
-    - syntax highlighting?
-
 - general: support command line arguments
   - `--host HOST` (default: `127.0.0.1`)
   - `--port PORT` (default: `8080`)
   - `--root DIR` (default: `.`)
   - `--dev/--no-dev` (default: `--dev`)
 
+- `templates/dir.html`/`templates/file.html`
+  - split the "Contents of XXX" into path segments and then make links out of
+    them so that you can navigate to a specific parent directory
+
+- `templates/file.html`
+  - scrollable `<pre>`
+  - preview file (based on file extension)
+    - syntax highlighting?
+
 - general
-  - better css design
+  - better css design (both desktop and mobile)
 
 - `webls.py`
   - handle other cases besides `is_dir()` and `is_file()`
