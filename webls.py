@@ -1,3 +1,4 @@
+import stat
 from bottle import Bottle, SimpleTemplate, run, abort, static_file, redirect
 from pathlib import Path
 
@@ -11,6 +12,20 @@ def dir_entry_sort_key(path):
     return (dir_first, dot_first, path)
 
 
+def size_pretty(size):
+    units = ['B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+    idx = 0
+
+    while size > 1024:
+        size /= 1024
+        idx += 1
+
+    if idx == 0:
+        return f'{size:d}{units[idx]}'
+    else:
+        return f'{size:.1f}{units[idx]}'
+
+
 def dir_read_entries(path):
     entries = [
         entry
@@ -19,14 +34,23 @@ def dir_read_entries(path):
 
     entries.sort(key=dir_entry_sort_key)
     for idx, entry in enumerate(entries):
+        entry_stat = entry.stat()
         entries[idx] = {
+            'is_dir': False,
+            'mode': stat.filemode(entry_stat.st_mode),
+            'size_bytes': entry_stat.st_size,
+            'size_pretty': size_pretty(entry_stat.st_size),
             'name': str(entry.name),
             'url': f'/fs/{entry}',
+            'dl_url': f'/dl/{entry}',
+            'link_class': 'entry-file',
         }
 
         if entry.is_dir():
+            entries[idx]['is_dir'] = True
             entries[idx]['name'] += '/'
             entries[idx]['url'] += '/'
+            entries[idx]['link_class'] = 'entry-dir'
 
     return entries
 

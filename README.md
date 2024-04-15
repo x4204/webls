@@ -27,21 +27,8 @@ python -m webls
 
 ## TODO
 
-- `templates/dir.html`
-  - display as table
-    - file type (icon)
-    - file permissions
-    - file name (with color)
-    - file size
-    - download link
-      - use a unicode character?; same for other download links?
-      - https://symbl.cc/en/21AF/
-
-- general
-  - better css design
-
-- download
-  - support downloading a directory (with confirmation; zip)
+- `static_file` does not always download as file, sometimes it just displays
+  the contents in the browser (for example in the case of `.gitignore`)
 
 - `webls.py`
   - handle other cases besides `is_dir()` and `is_file()`
@@ -58,3 +45,9 @@ python -m webls
 - security
   - search for url attacks + symlink traversal; analyze; try to secure agains
     these kinds of attacks (also see `bottle.static_file`)
+
+- general
+  - better css design
+
+- download
+  - support downloading a directory (with confirmation; zip)

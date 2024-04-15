@@ -12,13 +12,40 @@
       % if not entries:
         <p>directory is empty</p>
       % else:
-        <ul>
-          % for entry in entries:
-            <li>
-              <a href="{{entry['url']}}">{{entry['name']}}</a>
-            </li>
-          % end
-        </ul>
+        <table>
+          <thead>
+            <tr>
+              <th class="th-mode">mode</th>
+              <th class="th-size">size</th>
+              <th class="th-entry">entry</th>
+              <th class="th-action"></th>
+            </tr>
+          </thead>
+          <tbody>
+            % for entry in entries:
+              <tr class="entry">
+                <td class="entry-mode">
+                  {{entry['mode']}}
+                </td>
+                <td class="entry-size" title="{{entry['size_bytes']}} bytes">
+                  {{entry['size_pretty']}}
+                </td>
+                <td class="entry-name" title="{{entry['name']}}">
+                  <a class="{{entry['link_class']}}" href="{{entry['url']}}">
+                    {{entry['name']}}
+                  </a>
+                </td>
+                <td class="entry-action">
+                  % if not entry['is_dir']:
+                    <a class="dl-btn" href="{{entry['dl_url']}}" title="download">
+                      &#8623;
+                    </a>
+                  % end
+                </td>
+              </tr>
+            % end
+          </tbody>
+        </table>
       % end
     </main>
   </body>

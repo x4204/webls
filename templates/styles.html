@@ -1,8 +1,4 @@
 <style>
-  :root {
-    --code-background-color: #d2d1d1;
-  }
-
   * {
     margin: 0;
     padding: 0;
@@ -20,8 +16,93 @@
   }
 
   code {
-    background-color: var(--code-background-color);
+    background-color: #d2d1d1;
     border-radius: 5px;
     padding: 0px 5px;
+  }
+
+  table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  thead,
+  tfoot {
+    background-color: #b8e2f5;
+  }
+
+  th,
+  td {
+    border: 1px solid #a0a0a0;
+    padding: 8px 10px;
+  }
+
+  tbody > tr:nth-of-type(even) {
+    background-color: #edeef2;
+  }
+
+  .th-mode {
+    width: 100px;
+  }
+
+  .th-size {
+    width: 60px;
+  }
+
+  .th-entry {
+  }
+
+  .th-action {
+    width: 25px;
+  }
+
+  .entry:hover {
+    background-color: #ffdd99;
+  }
+
+  .entry-mode {
+    text-align: center;
+  }
+
+  .entry-size {
+    text-align: right;
+  }
+
+  .entry-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .entry-dir,
+  .entry-file {
+    text-decoration: none;
+  }
+
+  .entry-dir:hover,
+  .entry-file:hover {
+    text-decoration: underline;
+  }
+
+  .entry-dir {
+    color: #3465a4;
+    font-weight: bold;
+  }
+
+  .entry-file {
+    color: #181818;
+  }
+
+  .entry-action {
+    text-align: center;
+  }
+
+  .dl-btn {
+    text-decoration: none;
+    color: black;
+    padding: 0px 5px;
+    border: 1px black solid;
+    border-radius: 5px;
   }
 </style>
