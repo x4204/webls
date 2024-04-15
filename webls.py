@@ -1,4 +1,6 @@
+import mimetypes
 import stat
+
 from bottle import Bottle, SimpleTemplate, run, abort, static_file, redirect
 from pathlib import Path
 
@@ -40,7 +42,7 @@ def dir_read_entries(path):
             'mode': stat.filemode(entry_stat.st_mode),
             'size_bytes': entry_stat.st_size,
             'size_pretty': size_pretty(entry_stat.st_size),
-            'name': str(entry.name),
+            'name': entry.name,
             'url': f'/fs/{entry}',
             'dl_url': f'/dl/{entry}',
             'link_class': 'entry-file',
@@ -115,7 +117,20 @@ def app_build():
 
     @app.route('/dl<web_path:path>')
     def handler(web_path):
-        return static_file(web_path, root='.')
+        fs_path = Path(web_path.lstrip('/'))
+        kwargs = {}
+
+        mimetype, encoding = mimetypes.guess_type(fs_path)
+        interpret_as_octet_stream = (
+            mimetype is None
+            or mimetype[:5] == 'text/'
+        )
+
+        if interpret_as_octet_stream:
+            kwargs['mimetype'] = 'application/octet-stream'
+            kwargs['download'] = True
+
+        return static_file(web_path, root='.', **kwargs)
 
     return app
 

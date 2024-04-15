@@ -37,7 +37,12 @@
                 </td>
                 <td class="entry-action">
                   % if not entry['is_dir']:
-                    <a class="dl-btn" href="{{entry['dl_url']}}" title="download">
+                    <a
+                      class="dl-btn"
+                      href="{{entry['dl_url']}}"
+                      target="_blank"
+                      title="download"
+                    >
                       &#8623;
                     </a>
                   % end
