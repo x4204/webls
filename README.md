@@ -28,8 +28,7 @@ python -m webls --help
 
 ## TODO
 
-- general
-  - support for mobile
+- scrollable table in `dir.html`
 
 - file preview:
   - based on mimetype (pdf, png, jpg, etc.)

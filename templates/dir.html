@@ -17,8 +17,8 @@
         <table>
           <thead>
             <tr>
-              <th class="th-mode">mode</th>
-              <th class="th-size">size</th>
+              <th class="th-mode xs-hide">mode</th>
+              <th class="th-size xs-hide">size</th>
               <th class="th-entry">entry</th>
               <th class="th-action"></th>
             </tr>
@@ -26,10 +26,13 @@
           <tbody>
             % for entry in entries:
               <tr class="entry">
-                <td class="entry-mode">
+                <td class="entry-mode xs-hide">
                   {{entry['mode']}}
                 </td>
-                <td class="entry-size" title="{{entry['size_bytes']}} bytes">
+                <td
+                  class="entry-size xs-hide"
+                  title="{{entry['size_bytes']}} bytes"
+                >
                   {{entry['size_pretty']}}
                 </td>
                 <td class="entry-name" title="{{entry['name']}}">

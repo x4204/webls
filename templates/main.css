@@ -3,11 +3,24 @@
   padding: 0;
 }
 
+html,
 body {
-  width: 800px;
-  margin: auto;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-flow: column;
+  width: 748px;
+  padding: 0px 10px;
+  margin: 0px auto;
   font-family: monospace;
   font-size: 16px;
+}
+
+main {
+  margin-bottom: 30px;
+  flex: 1 1 auto;
 }
 
 code {
@@ -55,7 +68,6 @@ tbody > tr:nth-of-type(even) {
 
 .pre-container {
   overflow: scroll;
-  max-height: 800px;
   background-color: #f1f1f1;
   padding: 10px;
 }
@@ -141,7 +153,23 @@ pre > .line-numbers {
   text-decoration: none;
   color: #000000;
   background-color: #ffffff;
-  padding: 0px 5px;
+  padding: 4px 8px;
   border: 1px black solid;
   border-radius: 5px;
+}
+
+@media screen and (max-width: 768px) {
+  body {
+    width: calc(100% - 20px);
+  }
+
+  .pre-container {
+    max-height: 700px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .xs-hide {
+    display: none;
+  }
 }
