@@ -10,10 +10,14 @@
   </head>
   <body>
     % include('crumbs.html')
-    <main>
-      % if not entries:
-        <p>directory is empty</p>
-      % else:
+    % if not entries:
+      <main class="warning">
+        <div class="message">directory is empty</div>
+        <br>
+        <p class="path">{{path}}</p>
+      </main>
+    % else:
+      <main>
         <table>
           <thead>
             <tr>
@@ -56,7 +60,7 @@
             % end
           </tbody>
         </table>
-      % end
-    </main>
+      </main>
+    % end
   </body>
 </html>

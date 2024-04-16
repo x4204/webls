@@ -28,7 +28,7 @@ python -m webls --help
 
 ## TODO
 
-- file preview:
+- in-browser file preview:
   - based on mimetype (pdf, png, jpg, etc.)
 
 - cover with tests

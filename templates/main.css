@@ -15,7 +15,7 @@ body {
   padding: 0px 10px;
   margin: 0px auto;
   font-family: monospace;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 code {
@@ -75,6 +75,7 @@ tbody > tr:nth-of-type(even) {
   background-color: #f1f1f1;
   padding: 10px;
   margin-bottom: 30px;
+  border-radius: 5px;
 }
 
 pre {
@@ -123,12 +124,12 @@ pre > .line-numbers {
 
 .entry-mode {
   text-align: left;
-  width: 100px;
+  width: 90px;
 }
 
 .entry-size {
   text-align: right;
-  width: 60px;
+  width: 55px;
 }
 
 .entry-name {
