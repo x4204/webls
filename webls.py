@@ -68,6 +68,31 @@ def size_pretty(size):
         return f'{size:.1f}{units[idx]}'
 
 
+def path_crumbs(app, path):
+    crumbs = [path] + list(path.parents)
+
+    crumbs.reverse()
+    if len(crumbs) == 1:
+        crumbs = [Path('.')]
+
+    for idx, path in enumerate(crumbs):
+        if path == Path('.'):
+            name = '.'
+        else:
+            name = path.name
+
+        crumbs[idx] = {
+            'name': name,
+            'url': app.get_url('fs', path=path),
+            'link_class': 'is-file',
+        }
+
+        if path.is_dir():
+            crumbs[idx]['link_class'] = 'is-dir'
+
+    return crumbs
+
+
 def dir_read_entries(app, path):
     entries = list(path.iterdir())
 
@@ -82,14 +107,14 @@ def dir_read_entries(app, path):
             'name': entry.name,
             'url': app.get_url('fs', path=entry),
             'dl_url': app.get_url('dl', path=entry),
-            'link_class': 'entry-file',
+            'link_class': 'is-file',
         }
 
         if entry.is_dir():
             entries[idx]['is_dir'] = True
             entries[idx]['name'] += '/'
             entries[idx]['url'] += '/'
-            entries[idx]['link_class'] = 'entry-dir'
+            entries[idx]['link_class'] = 'is-dir'
 
     return entries
 
@@ -97,6 +122,7 @@ def dir_read_entries(app, path):
 def dir_serve(app, path):
     return app.templates['dir.html'].render(
         path=path,
+        crumbs=path_crumbs(app, path),
         entries=dir_read_entries(app, path),
     )
 
@@ -111,6 +137,7 @@ def file_serve(app, path):
 
     return app.templates['file.html'].render(
         path=path,
+        crumbs=path_crumbs(app, path),
         dl_url=app.get_url('dl', path=path),
         can_display=can_display,
         file_content=file_content,

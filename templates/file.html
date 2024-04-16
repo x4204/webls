@@ -7,9 +7,8 @@
     % include('styles.html')
   </head>
   <body>
+    % include('crumbs.html')
     <main>
-      <h1><code>{{path}}</code></h1>
-      <a href="{{dl_url}}">download</a>
       % if can_display:
         % if len(file_content) == 0:
           <p>file is empty</p>

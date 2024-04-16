@@ -1,0 +1,14 @@
+<nav>
+  <div class="crumbs">
+    % for crumb in crumbs:
+<span><a class="{{crumb['link_class']}}" href="{{crumb['url']}}"><code>{{crumb['name']}}</code></a></span>\\
+    % end
+  </div>
+  % if defined('dl_url'):
+    <div>
+      <a class="dl-btn" href="{{dl_url}}" target="_blank" title="download">
+        &#8623;
+      </a>
+    </div>
+  % end
+</nav>

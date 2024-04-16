@@ -2,16 +2,9 @@
 
 Simple file browser over HTTP
 
-## Running
+## Setup
 
-```
-python -m webls
-python -m webls --help
-```
-
-## Development
-
-- setup virtual environment
+- create virtual environment
 ```
 virtualenv .venv --python $(which python3.12)
 ```
@@ -26,16 +19,22 @@ virtualenv .venv --python $(which python3.12)
 pip install -r requirements.txt
 ```
 
+## Running
+
+```
+python -m webls
+python -m webls --help
+```
+
 ## TODO
 
-- `templates/dir.html`/`templates/file.html`
-  - split the "Contents of XXX" into path segments and then make links out of
-    them so that you can navigate to a specific parent directory
+- have better not found page
+  - file `xxx` not found
+  - link to root
 
 - `templates/file.html`
   - scrollable `<pre>`
-  - preview file (based on file extension)
-    - syntax highlighting?
+  - ?line numbers
 
 - general
   - better css design (both desktop and mobile)
@@ -48,6 +47,8 @@ pip install -r requirements.txt
 - security
   - search for url attacks + symlink traversal; analyze; try to secure agains
     these kinds of attacks (also see `bottle.static_file`)
+
+- file syntax highlighting (based on file extension)
 
 - download
   - support downloading a directory (with confirmation; zip)

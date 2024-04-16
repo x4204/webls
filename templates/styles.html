@@ -5,20 +5,32 @@
   }
 
   body {
-    display: flex;
-    justify-content: center;
+    width: 800px;
+    margin: auto;
     font-family: monospace;
     font-size: 16px;
   }
 
-  main {
-    width: 800px;
+  code {
+    background-color: #e1e3e8;
+    border-radius: 5px;
+    padding: 3px 7px;
   }
 
-  code {
-    background-color: #d2d1d1;
-    border-radius: 5px;
-    padding: 0px 5px;
+  nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0px;
+  }
+
+  nav > div.crumbs > span {
+    display: inline-block;
+    padding: 5px 0px;
+  }
+
+  nav > div.crumbs > span:not(:last-child)::after {
+    content: "/";
+    padding: 0px 3px;
   }
 
   table {
@@ -40,6 +52,25 @@
 
   tbody > tr:nth-of-type(even) {
     background-color: #edeef2;
+  }
+
+  .is-dir,
+  .is-file {
+    text-decoration: none;
+  }
+
+  .is-dir:hover,
+  .is-file:hover {
+    text-decoration: underline;
+  }
+
+  .is-dir {
+    color: #3465a4;
+    font-weight: bold;
+  }
+
+  .is-file {
+    color: #181818;
   }
 
   .th-mode {
@@ -75,30 +106,12 @@
     text-overflow: ellipsis;
   }
 
-  .entry-dir,
-  .entry-file {
-    text-decoration: none;
-  }
-
-  .entry-dir:hover,
-  .entry-file:hover {
-    text-decoration: underline;
-  }
-
-  .entry-dir {
-    color: #3465a4;
-    font-weight: bold;
-  }
-
-  .entry-file {
-    color: #181818;
-  }
-
   .entry-action {
     text-align: center;
   }
 
   .dl-btn {
+    display: inline-block;
     text-decoration: none;
     color: #000000;
     background-color: #ffffff;
