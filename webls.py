@@ -157,9 +157,19 @@ def app_build(opts):
 
     @app.error(404)
     def handler(error):
-        return 'not found'
+        req = bottle.request
+        path = Path(req.path[4:])
+
+        if req.path[:4] not in ['/fs/', '/dl/']:
+            return f'not found: {req.method} {req.path}'
+        else:
+            return app.templates['not_found.html'].render(
+                path=path,
+                root_url=app.get_url('fs', path=''),
+            )
 
     @app.route('/')
+    @app.route('/fs')
     def handler():
         bottle.redirect(app.get_url('fs', path=''))
 

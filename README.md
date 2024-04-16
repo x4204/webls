@@ -28,10 +28,6 @@ python -m webls --help
 
 ## TODO
 
-- have better not found page
-  - file `xxx` not found
-  - link to root
-
 - `templates/file.html`
   - scrollable `<pre>`
   - ?line numbers
@@ -39,8 +35,8 @@ python -m webls --help
 - general
   - better css design (both desktop and mobile)
 
-- `webls.py`
-  - handle other cases besides `is_dir()` and `is_file()`
+- file preview:
+  - based on mimetype (pdf, png, jpg, etc.)
 
 - cover with tests
 
@@ -48,7 +44,10 @@ python -m webls --help
   - search for url attacks + symlink traversal; analyze; try to secure agains
     these kinds of attacks (also see `bottle.static_file`)
 
-- file syntax highlighting (based on file extension)
+- `webls.py`
+  - handle other cases besides `is_dir()` and `is_file()`
+
+- file syntax highlighting
 
 - download
   - support downloading a directory (with confirmation; zip)
