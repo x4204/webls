@@ -10,16 +10,17 @@
   </head>
   <body>
     % include('crumbs.html')
-    <main>
-      % if can_display:
-        % if len(file_content) == 0:
-          <p>file is empty</p>
-        % else:
-          <pre>{{file_content}}</pre>
-        % end
-      % else:
-        <p>the contents of the file cannot be displayed</p>
-      % end
-    </main>
+    % if can_display:
+      <main class="pre-container">
+        <pre>
+          <div class="line-numbers">{{line_numbers}}</div>
+          <div class="lines">{{file_content}}</div>
+        </pre>
+      </main>
+    % else:
+      <main class="warning">
+        <div class="message">{{error_msg}}</div>
+      </main>
+    % end
   </body>
 </html>

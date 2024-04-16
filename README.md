@@ -28,12 +28,8 @@ python -m webls --help
 
 ## TODO
 
-- `templates/file.html`
-  - scrollable `<pre>`
-  - ?line numbers
-
 - general
-  - better css design (both desktop and mobile)
+  - support for mobile
 
 - file preview:
   - based on mimetype (pdf, png, jpg, etc.)
@@ -47,7 +43,7 @@ python -m webls --help
 - `webls.py`
   - handle other cases besides `is_dir()` and `is_file()`
 
-- file syntax highlighting
+- syntax highlighting
 
 - download
   - support downloading a directory (with confirmation; zip)

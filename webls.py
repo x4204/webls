@@ -130,16 +130,32 @@ def dir_serve(app, path):
 def file_serve(app, path):
     try:
         file_content = path.read_text()
+        line_count = file_content.count('\n')
         can_display = True
+        error_msg = None
+
+        if len(file_content) == 0:
+            can_display = False
+            error_msg = 'file is empty'
+        else:
+            line_count += 1
+            line_numbers = '\n'.join([
+                f'{number}.'
+                for number in range(1, line_count + 1)
+            ])
     except UnicodeDecodeError:
         file_content = None
+        line_numbers = None
         can_display = False
+        error_msg = 'the contents of the file cannot be displayed'
 
     return app.templates['file.html'].render(
         path=path,
         crumbs=path_crumbs(app, path),
         dl_url=app.get_url('dl', path=path),
         can_display=can_display,
+        error_msg=error_msg,
+        line_numbers=line_numbers,
         file_content=file_content,
     )
 

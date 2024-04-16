@@ -53,13 +53,30 @@ tbody > tr:nth-of-type(even) {
   background-color: #edeef2;
 }
 
-.not-found {
+.pre-container {
+  overflow: scroll;
+  max-height: 800px;
+  background-color: #f1f1f1;
+  padding: 10px;
+}
+
+pre {
+  display: flex;
+}
+
+pre > .line-numbers {
+  text-align: right;
+  padding-right: 7px;
+  color: #b5b5b5;
+}
+
+.warning {
   text-align: center;
   background-color: #ffdd99;
   padding: 20px;
 }
 
-.not-found > .path {
+.warning > .path {
   color: red;
 }
 
