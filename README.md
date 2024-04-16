@@ -27,15 +27,15 @@ python -m webls
 
 ## TODO
 
-- general: support command line arguments
-  - `--host HOST` (default: `127.0.0.1`)
-  - `--port PORT` (default: `8080`)
-  - `--root DIR` (default: `.`)
-  - `--dev/--no-dev` (default: `--dev`)
+- ?register app resources (`templates/`)
+  - https://bottlepy.org/docs/dev/api.html#bottle.Bottle.resources
+  - ?reintroduce `os.chdir` to simplify the code a bit
+    - get rid of `app_root`/`fs_root`
 
 - `templates/dir.html`/`templates/file.html`
   - split the "Contents of XXX" into path segments and then make links out of
     them so that you can navigate to a specific parent directory
+  - get rid of `web_path`
 
 - `templates/file.html`
   - scrollable `<pre>`
