@@ -18,11 +18,6 @@ body {
   font-size: 16px;
 }
 
-main {
-  margin-bottom: 30px;
-  flex: 1 1 auto;
-}
-
 code {
   background-color: #e1e3e8;
   border-radius: 5px;
@@ -30,6 +25,7 @@ code {
 }
 
 nav {
+  flex: 0 1 auto;
   display: flex;
   justify-content: space-between;
   padding: 10px 0px;
@@ -45,20 +41,28 @@ nav > div.crumbs > span:not(:last-child)::after {
   padding: 0px 3px;
 }
 
+main {
+  padding-bottom: 30px;
+  flex: 1 1 auto;
+}
+
 table {
   border-collapse: collapse;
   table-layout: fixed;
   width: 100%;
 }
 
-thead,
-tfoot {
+thead {
   background-color: #b8e2f5;
+  position: sticky;
+  top: 0px;
 }
 
-th,
+th {
+  padding: 13px 10px;
+}
+
 td {
-  border: 1px solid #a0a0a0;
   padding: 8px 10px;
 }
 
@@ -70,6 +74,7 @@ tbody > tr:nth-of-type(even) {
   overflow: scroll;
   background-color: #f1f1f1;
   padding: 10px;
+  margin-bottom: 30px;
 }
 
 pre {
@@ -83,6 +88,7 @@ pre > .line-numbers {
 }
 
 .warning {
+  flex: unset;
   text-align: center;
   background-color: #ffdd99;
   padding: 20px;
@@ -111,34 +117,22 @@ pre > .line-numbers {
   color: #181818;
 }
 
-.th-mode {
-  width: 100px;
-}
-
-.th-size {
-  width: 60px;
-}
-
-.th-entry {
-}
-
-.th-action {
-  width: 25px;
-}
-
 .entry:hover {
   background-color: #ffdd99;
 }
 
 .entry-mode {
-  text-align: center;
+  text-align: left;
+  width: 100px;
 }
 
 .entry-size {
   text-align: right;
+  width: 60px;
 }
 
 .entry-name {
+  text-align: left;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -146,13 +140,14 @@ pre > .line-numbers {
 
 .entry-action {
   text-align: center;
+  width: 25px;
 }
 
 .dl-btn {
   display: inline-block;
   text-decoration: none;
   color: #000000;
-  background-color: #ffffff;
+  background-color: #bfe8cf;
   padding: 4px 8px;
   border: 1px black solid;
   border-radius: 5px;

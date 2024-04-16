@@ -33,6 +33,8 @@ class Templates:
 
 
 class WrapPath:
+    api = 2
+
     def apply(self, callback, route):
         @functools.wraps(callback)
         def wrapper(*args, **kwargs):
@@ -137,6 +139,7 @@ def file_serve(app, path):
         if len(file_content) == 0:
             can_display = False
             error_msg = 'file is empty'
+            line_numbers = 0
         else:
             line_count += 1
             line_numbers = '\n'.join([
@@ -181,6 +184,7 @@ def app_build(opts):
         else:
             return app.templates['not_found.html'].render(
                 path=path,
+                crumbs=path_crumbs(app, path),
                 root_url=app.get_url('fs', path=''),
             )
 

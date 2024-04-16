@@ -28,8 +28,6 @@ python -m webls --help
 
 ## TODO
 
-- scrollable table in `dir.html`
-
 - file preview:
   - based on mimetype (pdf, png, jpg, etc.)
 
