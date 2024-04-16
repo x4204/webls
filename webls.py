@@ -93,7 +93,7 @@ def file_serve(app_root, fs_root, web_path, fs_path):
     )
 
 
-def app_build(*, config):
+def app_build(config):
     app = Bottle()
 
     app.config.update(config)
@@ -184,14 +184,15 @@ def option_parser_build():
     return option_parser
 
 
-def bottle_run_kwargs(opts):
-    config = {
+def app_config(opts):
+    return {
         'webls.app_root': Path('.').absolute(),
         'webls.fs_root': Path(opts.root),
     }
-    app = app_build(config=config)
+
+
+def run_kwargs(opts):
     kwargs = {
-        'app': app,
         'host': opts.host,
         'port': opts.port,
     }
@@ -208,4 +209,7 @@ if __name__ == '__main__':
     option_parser = option_parser_build()
     opts, _ = option_parser.parse_args()
 
-    bottle.run(**bottle_run_kwargs(opts))
+    config = app_config(opts)
+    kwargs = run_kwargs(opts)
+
+    app_build(config).run(**kwargs)
