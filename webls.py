@@ -31,21 +31,20 @@ def size_pretty(size):
         return f'{size:.1f}{units[idx]}'
 
 
-def dir_read_entries(fs_root, fs_path):
+def dir_read_entries(fs_path):
     entries = list(fs_path.iterdir())
 
     entries.sort(key=dir_entry_sort_key)
     for idx, entry in enumerate(entries):
         entry_stat = entry.stat()
-        entry_path = entry.relative_to(fs_root)
         entries[idx] = {
             'is_dir': False,
             'mode': stat.filemode(entry_stat.st_mode),
             'size_bytes': entry_stat.st_size,
             'size_pretty': size_pretty(entry_stat.st_size),
             'name': entry.name,
-            'url': f'/fs/{entry_path}',
-            'dl_url': f'/dl/{entry_path}',
+            'url': f'/fs/{entry}',
+            'dl_url': f'/dl/{entry}',
             'link_class': 'entry-file',
         }
 
@@ -58,26 +57,15 @@ def dir_read_entries(fs_root, fs_path):
     return entries
 
 
-def dir_serve(app_root, fs_root, web_path, fs_path):
-    template = SimpleTemplate(
-        lookup=[app_root.joinpath('templates/')],
-        name='dir.html',
-    )
-
+def dir_serve(template, web_path, fs_path):
     return template.render(
         web_path=web_path,
-        entries=dir_read_entries(fs_root, fs_path),
+        entries=dir_read_entries(fs_path),
     )
 
 
-def file_serve(app_root, fs_root, web_path, fs_path):
-    template = SimpleTemplate(
-        lookup=[app_root.joinpath('templates/')],
-        name='file.html',
-    )
-    entry_path = fs_path.relative_to(fs_root)
-
-    dl_url = f'/dl/{entry_path}'
+def file_serve(template, web_path, fs_path):
+    dl_url = f'/dl/{fs_path}'
     try:
         file_content = fs_path.read_text()
         can_display = True
@@ -93,10 +81,37 @@ def file_serve(app_root, fs_root, web_path, fs_path):
     )
 
 
-def app_build(config):
+class Templates:
+    def __init__(self, *, path, fresh):
+        self.path = path
+        self.fresh = fresh
+
+        self.cache = {}
+
+    def build(self, name):
+        return SimpleTemplate(
+            lookup=[self.path],
+            name=name,
+        )
+
+    def __getitem__(self, name):
+        if self.fresh:
+            return self.build(name)
+        if name in self.cache:
+            return self.cache[name]
+
+        self.cache[name] = self.build(name)
+        return self.cache[name]
+
+
+def app_build(opts):
     app = Bottle()
 
-    app.config.update(config)
+    app.path = Path('.').absolute()
+    app.tpls = Templates(
+        path=app.path.joinpath('templates/'),
+        fresh=opts.development,
+    )
 
     @app.error(404)
     def handler(error):
@@ -108,14 +123,12 @@ def app_build(config):
 
     @app.route('/fs<web_path:path>')
     def handler(web_path):
-        app_root = app.config['webls.app_root']
-        fs_root = app.config['webls.fs_root']
-        fs_path = fs_root.joinpath(web_path.lstrip('/'))
+        fs_path = Path(web_path.lstrip('/'))
 
         if fs_path.is_dir():
-            return dir_serve(app_root, fs_root, web_path, fs_path)
+            return dir_serve(app.tpls['dir.html'], web_path, fs_path)
         elif fs_path.is_file():
-            return file_serve(app_root, fs_root, web_path, fs_path)
+            return file_serve(app.tpls['file.html'], web_path, fs_path)
         elif not fs_path.exists():
             bottle.abort(404)
         else:
@@ -123,8 +136,7 @@ def app_build(config):
 
     @app.route('/dl<web_path:path>')
     def handler(web_path):
-        fs_root = app.config['webls.fs_root']
-        fs_path = fs_root.joinpath(web_path.lstrip('/'))
+        fs_path = Path(web_path.lstrip('/'))
         kwargs = {}
 
         mimetype, encoding = mimetypes.guess_type(fs_path)
@@ -137,9 +149,31 @@ def app_build(config):
             kwargs['mimetype'] = 'application/octet-stream'
             kwargs['download'] = True
 
-        return bottle.static_file(web_path, root=fs_root, **kwargs)
+        return bottle.static_file(web_path, root='.', **kwargs)
 
     return app
+
+
+def run_kwargs(opts):
+    kwargs = {
+        'host': opts.host,
+        'port': opts.port,
+    }
+
+    if opts.development:
+        kwargs['reloader'] = True
+        kwargs['interval'] = 0.2
+        kwargs['debug'] = True
+
+    return kwargs
+
+
+def app_chdir(opts):
+    dev = opts.development
+    child = bool(os.getenv('BOTTLE_CHILD'))
+
+    if not dev or (dev and child):
+        os.chdir(opts.root)
 
 
 def option_parser_build():
@@ -184,32 +218,12 @@ def option_parser_build():
     return option_parser
 
 
-def app_config(opts):
-    return {
-        'webls.app_root': Path('.').absolute(),
-        'webls.fs_root': Path(opts.root),
-    }
-
-
-def run_kwargs(opts):
-    kwargs = {
-        'host': opts.host,
-        'port': opts.port,
-    }
-
-    if opts.development:
-        kwargs['reloader'] = True
-        kwargs['interval'] = 0.2
-        kwargs['debug'] = True
-
-    return kwargs
-
-
 if __name__ == '__main__':
     option_parser = option_parser_build()
     opts, _ = option_parser.parse_args()
 
-    config = app_config(opts)
+    app = app_build(opts)
     kwargs = run_kwargs(opts)
 
-    app_build(config).run(**kwargs)
+    app_chdir(opts)
+    app.run(**kwargs)

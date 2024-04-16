@@ -27,10 +27,7 @@ python -m webls
 
 ## TODO
 
-- ?register app resources (`templates/`)
-  - https://bottlepy.org/docs/dev/api.html#bottle.Bottle.resources
-  - ?reintroduce `os.chdir` to simplify the code a bit
-    - get rid of `app_root`/`fs_root`
+- use `app.get_url` to build the urls
 
 - `templates/dir.html`/`templates/file.html`
   - split the "Contents of XXX" into path segments and then make links out of
