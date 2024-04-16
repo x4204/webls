@@ -2,6 +2,13 @@
 
 Simple file browser over HTTP
 
+## Running
+
+```
+python -m webls
+python -m webls --help
+```
+
 ## Development
 
 - setup virtual environment
@@ -19,20 +26,11 @@ virtualenv .venv --python $(which python3.12)
 pip install -r requirements.txt
 ```
 
-## Running
-
-```
-python -m webls
-```
-
 ## TODO
-
-- use `app.get_url` to build the urls
 
 - `templates/dir.html`/`templates/file.html`
   - split the "Contents of XXX" into path segments and then make links out of
     them so that you can navigate to a specific parent directory
-  - get rid of `web_path`
 
 - `templates/file.html`
   - scrollable `<pre>`
@@ -44,6 +42,8 @@ python -m webls
 
 - `webls.py`
   - handle other cases besides `is_dir()` and `is_file()`
+
+- cover with tests
 
 - security
   - search for url attacks + symlink traversal; analyze; try to secure agains

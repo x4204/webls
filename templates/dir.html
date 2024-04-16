@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>webls: {{web_path}}</title>
+    <title>webls: {{path}}</title>
     % include('styles.html')
   </head>
   <body>
     <main>
-      <h1><code>{{web_path}}</code></h1>
+      <h1><code>{{path}}</code></h1>
       % if not entries:
         <p>directory is empty</p>
       % else:

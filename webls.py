@@ -1,4 +1,5 @@
 import bottle
+import functools
 import mimetypes
 import os
 import stat
@@ -6,79 +7,6 @@ import stat
 from bottle import Bottle, SimpleTemplate
 from optparse import OptionParser
 from pathlib import Path
-
-
-def dir_entry_sort_key(path):
-    path_str = str(path)
-
-    dir_first = -1 if path.is_dir() else 1
-    dot_first = -1 if path_str.startswith('.') else 1
-
-    return (dir_first, dot_first, path)
-
-
-def size_pretty(size):
-    units = ['B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
-    idx = 0
-
-    while size > 1024:
-        size /= 1024
-        idx += 1
-
-    if idx == 0:
-        return f'{size:d}{units[idx]}'
-    else:
-        return f'{size:.1f}{units[idx]}'
-
-
-def dir_read_entries(fs_path):
-    entries = list(fs_path.iterdir())
-
-    entries.sort(key=dir_entry_sort_key)
-    for idx, entry in enumerate(entries):
-        entry_stat = entry.stat()
-        entries[idx] = {
-            'is_dir': False,
-            'mode': stat.filemode(entry_stat.st_mode),
-            'size_bytes': entry_stat.st_size,
-            'size_pretty': size_pretty(entry_stat.st_size),
-            'name': entry.name,
-            'url': f'/fs/{entry}',
-            'dl_url': f'/dl/{entry}',
-            'link_class': 'entry-file',
-        }
-
-        if entry.is_dir():
-            entries[idx]['is_dir'] = True
-            entries[idx]['name'] += '/'
-            entries[idx]['url'] += '/'
-            entries[idx]['link_class'] = 'entry-dir'
-
-    return entries
-
-
-def dir_serve(template, web_path, fs_path):
-    return template.render(
-        web_path=web_path,
-        entries=dir_read_entries(fs_path),
-    )
-
-
-def file_serve(template, web_path, fs_path):
-    dl_url = f'/dl/{fs_path}'
-    try:
-        file_content = fs_path.read_text()
-        can_display = True
-    except UnicodeDecodeError:
-        file_content = None
-        can_display = False
-
-    return template.render(
-        web_path=web_path,
-        dl_url=dl_url,
-        can_display=can_display,
-        file_content=file_content,
-    )
 
 
 class Templates:
@@ -104,14 +32,101 @@ class Templates:
         return self.cache[name]
 
 
+class WrapPath:
+    def apply(self, callback, route):
+        @functools.wraps(callback)
+        def wrapper(*args, **kwargs):
+            if 'path' in kwargs:
+                kwargs['path'] = Path(kwargs['path'])
+            else:
+                kwargs['path'] = Path('.')
+            return callback(*args, **kwargs)
+
+        return wrapper
+
+
+def dir_entry_sort_key(path):
+    path_str = str(path)
+
+    dir_first = -1 if path.is_dir() else 1
+    dot_first = -1 if path_str.startswith('.') else 1
+
+    return (dir_first, dot_first, path_str)
+
+
+def size_pretty(size):
+    units = ['B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+    idx = 0
+
+    while size > 1024:
+        size /= 1024
+        idx += 1
+
+    if idx == 0:
+        return f'{size:d}{units[idx]}'
+    else:
+        return f'{size:.1f}{units[idx]}'
+
+
+def dir_read_entries(app, path):
+    entries = list(path.iterdir())
+
+    entries.sort(key=dir_entry_sort_key)
+    for idx, entry in enumerate(entries):
+        entry_stat = entry.stat()
+        entries[idx] = {
+            'is_dir': False,
+            'mode': stat.filemode(entry_stat.st_mode),
+            'size_bytes': entry_stat.st_size,
+            'size_pretty': size_pretty(entry_stat.st_size),
+            'name': entry.name,
+            'url': app.get_url('fs', path=entry),
+            'dl_url': app.get_url('dl', path=entry),
+            'link_class': 'entry-file',
+        }
+
+        if entry.is_dir():
+            entries[idx]['is_dir'] = True
+            entries[idx]['name'] += '/'
+            entries[idx]['url'] += '/'
+            entries[idx]['link_class'] = 'entry-dir'
+
+    return entries
+
+
+def dir_serve(app, path):
+    return app.templates['dir.html'].render(
+        path=path,
+        entries=dir_read_entries(app, path),
+    )
+
+
+def file_serve(app, path):
+    try:
+        file_content = path.read_text()
+        can_display = True
+    except UnicodeDecodeError:
+        file_content = None
+        can_display = False
+
+    return app.templates['file.html'].render(
+        path=path,
+        dl_url=app.get_url('dl', path=path),
+        can_display=can_display,
+        file_content=file_content,
+    )
+
+
 def app_build(opts):
     app = Bottle()
 
     app.path = Path('.').absolute()
-    app.tpls = Templates(
+    app.templates = Templates(
         path=app.path.joinpath('templates/'),
         fresh=opts.development,
     )
+
+    wrap_path = WrapPath()
 
     @app.error(404)
     def handler(error):
@@ -119,37 +134,35 @@ def app_build(opts):
 
     @app.route('/')
     def handler():
-        bottle.redirect('/fs/')
+        bottle.redirect(app.get_url('fs', path=''))
 
-    @app.route('/fs<web_path:path>')
-    def handler(web_path):
-        fs_path = Path(web_path.lstrip('/'))
-
-        if fs_path.is_dir():
-            return dir_serve(app.tpls['dir.html'], web_path, fs_path)
-        elif fs_path.is_file():
-            return file_serve(app.tpls['file.html'], web_path, fs_path)
-        elif not fs_path.exists():
+    @app.route('/fs/', apply=wrap_path)
+    @app.route('/fs/<path:path>', name='fs', apply=wrap_path)
+    def handler(path):
+        if path.is_dir():
+            return dir_serve(app, path)
+        elif path.is_file():
+            return file_serve(app, path)
+        elif not path.exists():
             bottle.abort(404)
         else:
             raise NotImplementedError('unknown file type')
 
-    @app.route('/dl<web_path:path>')
-    def handler(web_path):
-        fs_path = Path(web_path.lstrip('/'))
-        kwargs = {}
-
-        mimetype, encoding = mimetypes.guess_type(fs_path)
+    @app.route('/dl/', apply=wrap_path)
+    @app.route('/dl/<path:path>', name='dl', apply=wrap_path)
+    def handler(path):
+        mimetype, encoding = mimetypes.guess_type(path)
         interpret_as_octet_stream = (
             mimetype is None
             or mimetype[:5] == 'text/'
         )
+        kwargs = {}
 
         if interpret_as_octet_stream:
             kwargs['mimetype'] = 'application/octet-stream'
             kwargs['download'] = True
 
-        return bottle.static_file(web_path, root='.', **kwargs)
+        return bottle.static_file(str(path), root='.', **kwargs)
 
     return app
 
@@ -202,17 +215,17 @@ def option_parser_build():
     )
     option_parser.add_option(
         '--dev',
-        help='run in development mode (default)',
+        help='run in development mode',
         dest='development',
         action='store_true',
-        default=True,
+        default=False,
     )
     option_parser.add_option(
         '--no-dev',
-        help='run in production mode',
+        help='run in production mode (default)',
         dest='development',
         action='store_false',
-        default=True,
+        default=False,
     )
 
     return option_parser
