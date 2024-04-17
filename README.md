@@ -28,9 +28,8 @@ python -m webls --help
 
 ## TODO
 
-- check if it looks ok in other browsers
-
 - cover with tests
+  - https://bottlepy.org/docs/dev/recipes.html#unit-testing-bottle-applications
 
 - security
   - search for url attacks + symlink traversal; analyze; try to secure against

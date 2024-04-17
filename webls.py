@@ -49,12 +49,12 @@ class WrapPath:
 
 
 def dir_entry_sort_key(path):
-    path_bytes = bytes(path)
+    path_str = str(path)
 
     dir_first = -1 if path.is_dir() else 1
-    dot_first = -1 if path_bytes.startswith(b'.') else 1
+    dot_first = -1 if path_str.startswith('.') else 1
 
-    return (dir_first, dot_first, path_bytes)
+    return (dir_first, dot_first, path_str)
 
 
 def size_pretty(size):
@@ -72,7 +72,7 @@ def size_pretty(size):
 
 
 def get_url(app, name, path):
-    path = quote(bytes(path))
+    path = quote(str(path))
 
     return app.get_url(name, path=path)
 
@@ -168,6 +168,7 @@ def file_guess_display_type(path):
         'application/postscript',
         'application/rtf',
         'application/trig',
+        'application/vnd.google-earth.kml+xml',
         'application/x-csh',
         'application/x-latex',
         'application/x-sh',
@@ -234,10 +235,10 @@ def file_serve_text_kwargs(kwargs):
     kwargs['display_kwargs']['line_numbers'] = line_numbers
 
 
-def file_serve_other_kwargs(**kwargs):
+def file_serve_other_kwargs(kwargs):
     kwargs['can_display'] = True
     kwargs['warning_message'] = None
-    kwargs['display_kwargs']['url'] = get_url(app, 'dl', path)
+    kwargs['display_kwargs']['url'] = get_url(app, 'dl', kwargs['path'])
 
 
 def file_serve(app, path):
@@ -339,7 +340,7 @@ def app_build(opts):
             kwargs['mimetype'] = 'application/octet-stream'
             kwargs['download'] = True
 
-        return bottle.static_file(bytes(path), root='.', **kwargs)
+        return bottle.static_file(str(path), root='.', **kwargs)
 
     return app
 
