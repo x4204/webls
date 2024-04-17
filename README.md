@@ -28,14 +28,12 @@ python -m webls --help
 
 ## TODO
 
-- do not display text file in the browser if too big (>1mb)
-
 - handle directory names with special characters (`asd?`, `asd#`, etc.)
   - currently 404 is returned
 
-- cover with tests
-
 - check if it looks ok in other browsers
+
+- cover with tests
 
 - security
   - search for url attacks + symlink traversal; analyze; try to secure against

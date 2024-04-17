@@ -196,18 +196,44 @@ def file_guess_display_type(path):
         return 'binary'
 
 
+def file_serve_text_kwargs(kwargs):
+    ONE_MIB = 1 << 20
+
+    file_size = kwargs['path'].stat().st_size
+    file_size_pretty = size_pretty(file_size)
+
+    if file_size > ONE_MIB:
+        kwargs['error_message'] = f'file is too big ({file_size_pretty})'
+        return
+
+    try:
+        file_content = kwargs['path'].read_text()
+    except UnicodeDecodeError:
+        return
+
+    if len(file_content) == 0:
+        kwargs['error_message'] = 'file is empty'
+        return
+
+    line_count = file_content.count('\n') + 1
+    line_numbers = '\n'.join([
+        f'{number}.'
+        for number in range(1, line_count + 1)
+    ])
+
+    kwargs['can_display'] = True
+    kwargs['error_message'] = None
+    kwargs['display_kwargs']['file_content'] = file_content
+    kwargs['display_kwargs']['line_numbers'] = line_numbers
+
+
+def file_serve_other_kwargs(**kwargs):
+    kwargs['can_display'] = True
+    kwargs['error_message'] = None
+    kwargs['display_kwargs']['url'] = app.get_url('dl', path=path)
+
+
 def file_serve(app, path):
-    kwargs = {
-        'path': path,
-        'crumbs': path_crumbs(app, path),
-        'dl_url': app.get_url('dl', path=path),
-    }
-
-    can_display = False
-    error_message = 'the contents cannot be displayed'
-    display_type = file_guess_display_type(path)
-    display_kwargs = {}
-
     is_forbidden_type = (
         path.is_socket()
         or path.is_fifo()
@@ -218,43 +244,40 @@ def file_serve(app, path):
     if is_forbidden_type:
         bottle.abort(403)
 
-    if display_type == 'binary':
-        display_kwargs = {}
-    elif display_type == 'text':
-        try:
-            file_content = path.read_text()
-            line_count = file_content.count('\n')
+    kwargs = {
+        'path': path,
+        'crumbs': path_crumbs(app, path),
+        'dl_url': app.get_url('dl', path=path),
+        'can_display': False,
+        'error_message': 'the contents cannot be displayed',
+        'display_type': file_guess_display_type(path),
+        'display_kwargs': {},
+    }
 
-            if len(file_content) == 0:
-                error_message = 'file is empty'
-            else:
-                can_display = True
-                error_message = None
-                line_count += 1
-
-            display_kwargs['file_content'] = file_content
-            display_kwargs['line_numbers'] = '\n'.join([
-                f'{number}.'
-                for number in range(1, line_count + 1)
-            ])
-        except UnicodeDecodeError:
-            pass
-    elif display_type in ['image', 'audio', 'video', 'pdf']:
-        can_display = True
-        error_message = None
-        display_kwargs['url'] = app.get_url('dl', path=path)
+    if kwargs['display_type'] == 'binary':
+        pass
+    elif kwargs['display_type'] == 'text':
+        file_serve_text_kwargs(kwargs)
+    elif kwargs['display_type'] in ['image', 'audio', 'video', 'pdf']:
+        file_serve_other_kwargs(kwargs)
     else:
-        raise NotImplementedError(display_type)
-
-    kwargs.update({
-        'can_display': can_display,
-        'error_message': error_message,
-        'display_type': display_type,
-        'display_kwargs': display_kwargs,
-    })
+        raise NotImplementedError(kwargs['display_type'])
 
     return app.templates['file.html'].render(**kwargs)
 
+
+def error_serve(app, error, template_name, message):
+    req = bottle.request
+    path = Path(req.path[4:])
+
+    if req.path[:4] != '/fs/':
+        return f'{message}: {req.method} {req.path}'
+    else:
+        return app.templates[template_name].render(
+            path=path,
+            crumbs=path_crumbs(app, path),
+            root_url=app.get_url('fs', path=''),
+        )
 
 
 def app_build(opts):
@@ -270,31 +293,12 @@ def app_build(opts):
 
     @app.error(403)
     def handler(error):
-        req = bottle.request
-        path = Path(req.path[4:])
-
-        if req.path[:4] not in ['/fs/', '/dl/']:
-            return f'forbidden: {req.method} {req.path}'
-        else:
-            return app.templates['forbidden.html'].render(
-                path=path,
-                crumbs=path_crumbs(app, path),
-                root_url=app.get_url('fs', path=''),
-            )
+        return error_serve(app, error, 'forbidden.html', 'forbidden')
 
     @app.error(404)
     def handler(error):
-        req = bottle.request
-        path = Path(req.path[4:])
+        return error_serve(app, error, 'not_found.html', 'not found')
 
-        if req.path[:4] not in ['/fs/', '/dl/']:
-            return f'not found: {req.method} {req.path}'
-        else:
-            return app.templates['not_found.html'].render(
-                path=path,
-                crumbs=path_crumbs(app, path),
-                root_url=app.get_url('fs', path=''),
-            )
 
     @app.route('/')
     @app.route('/fs')
