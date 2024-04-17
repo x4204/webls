@@ -190,10 +190,10 @@ def file_serve(app, path):
             if len(file_content) == 0:
                 error_message = 'file is empty'
             else:
+                can_display = True
+                error_message = None
                 line_count += 1
 
-            can_display = True
-            error_message = None
             display_kwargs['file_content'] = file_content
             display_kwargs['line_numbers'] = '\n'.join([
                 f'{number}.'
