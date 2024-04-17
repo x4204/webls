@@ -7,6 +7,7 @@ import stat
 from bottle import Bottle, SimpleTemplate
 from optparse import OptionParser
 from pathlib import Path
+from urllib.parse import quote
 
 
 class Templates:
@@ -48,12 +49,12 @@ class WrapPath:
 
 
 def dir_entry_sort_key(path):
-    path_str = str(path)
+    path_bytes = bytes(path)
 
     dir_first = -1 if path.is_dir() else 1
-    dot_first = -1 if path_str.startswith('.') else 1
+    dot_first = -1 if path_bytes.startswith(b'.') else 1
 
-    return (dir_first, dot_first, path_str)
+    return (dir_first, dot_first, path_bytes)
 
 
 def size_pretty(size):
@@ -68,6 +69,12 @@ def size_pretty(size):
         return f'{size:d}{units[idx]}'
     else:
         return f'{size:.1f}{units[idx]}'
+
+
+def get_url(app, name, path):
+    path = quote(bytes(path))
+
+    return app.get_url(name, path=path)
 
 
 def path_crumbs(app, path):
@@ -85,7 +92,7 @@ def path_crumbs(app, path):
 
         crumbs[idx] = {
             'name': name,
-            'url': app.get_url('fs', path=path),
+            'url': get_url(app, 'fs', path),
             'link_class': 'is-file',
         }
 
@@ -111,8 +118,8 @@ def dir_read_entries(app, path):
             'size_bytes': entry_stat.st_size,
             'size_pretty': size_pretty(entry_stat.st_size),
             'name': entry.name,
-            'url': app.get_url('fs', path=entry),
-            'dl_url': app.get_url('dl', path=entry),
+            'url': get_url(app, 'fs', entry),
+            'dl_url': get_url(app, 'dl', entry),
             'entry_class': 'is-file',
             'symlink_path': None,
             'symlink_class': 'is-file',
@@ -203,7 +210,7 @@ def file_serve_text_kwargs(kwargs):
     file_size_pretty = size_pretty(file_size)
 
     if file_size > ONE_MIB:
-        kwargs['error_message'] = f'file is too big ({file_size_pretty})'
+        kwargs['warning_message'] = f'file is too big ({file_size_pretty})'
         return
 
     try:
@@ -211,8 +218,8 @@ def file_serve_text_kwargs(kwargs):
     except UnicodeDecodeError:
         return
 
-    if len(file_content) == 0:
-        kwargs['error_message'] = 'file is empty'
+    if file_size == 0:
+        kwargs['warning_message'] = 'file is empty'
         return
 
     line_count = file_content.count('\n') + 1
@@ -222,15 +229,15 @@ def file_serve_text_kwargs(kwargs):
     ])
 
     kwargs['can_display'] = True
-    kwargs['error_message'] = None
+    kwargs['warning_message'] = None
     kwargs['display_kwargs']['file_content'] = file_content
     kwargs['display_kwargs']['line_numbers'] = line_numbers
 
 
 def file_serve_other_kwargs(**kwargs):
     kwargs['can_display'] = True
-    kwargs['error_message'] = None
-    kwargs['display_kwargs']['url'] = app.get_url('dl', path=path)
+    kwargs['warning_message'] = None
+    kwargs['display_kwargs']['url'] = get_url(app, 'dl', path)
 
 
 def file_serve(app, path):
@@ -247,9 +254,9 @@ def file_serve(app, path):
     kwargs = {
         'path': path,
         'crumbs': path_crumbs(app, path),
-        'dl_url': app.get_url('dl', path=path),
+        'dl_url': get_url(app, 'dl', path),
         'can_display': False,
-        'error_message': 'the contents cannot be displayed',
+        'warning_message': 'the contents cannot be displayed',
         'display_type': file_guess_display_type(path),
         'display_kwargs': {},
     }
@@ -276,7 +283,7 @@ def error_serve(app, error, template_name, message):
         return app.templates[template_name].render(
             path=path,
             crumbs=path_crumbs(app, path),
-            root_url=app.get_url('fs', path=''),
+            root_url=get_url(app, 'fs', ''),
         )
 
 
@@ -303,7 +310,7 @@ def app_build(opts):
     @app.route('/')
     @app.route('/fs')
     def handler():
-        bottle.redirect(app.get_url('fs', path=''))
+        bottle.redirect(get_url(app, 'fs', ''))
 
     @app.route('/fs/', apply=wrap_path)
     @app.route('/fs/<path:path>', name='fs', apply=wrap_path)
@@ -332,7 +339,7 @@ def app_build(opts):
             kwargs['mimetype'] = 'application/octet-stream'
             kwargs['download'] = True
 
-        return bottle.static_file(str(path), root='.', **kwargs)
+        return bottle.static_file(bytes(path), root='.', **kwargs)
 
     return app
 

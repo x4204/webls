@@ -28,9 +28,6 @@ python -m webls --help
 
 ## TODO
 
-- handle directory names with special characters (`asd?`, `asd#`, etc.)
-  - currently 404 is returned
-
 - check if it looks ok in other browsers
 
 - cover with tests
