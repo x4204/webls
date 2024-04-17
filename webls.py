@@ -129,38 +129,94 @@ def dir_serve(app, path):
     )
 
 
-def file_serve(app, path):
-    try:
-        file_content = path.read_text()
-        line_count = file_content.count('\n')
-        can_display = True
-        error_msg = None
+def file_guess_display_type(path):
+    MIMETYPES_TEXT = [
+        'application/json',
+        'application/manifest+json',
+        'application/n-quads',
+        'application/n-triples',
+        'application/postscript',
+        'application/rtf',
+        'application/trig',
+        'application/x-csh',
+        'application/x-latex',
+        'application/x-sh',
+        'application/x-shar',
+        'application/x-tcl',
+        'application/x-tex',
+        'application/x-texinfo',
+        'application/x-troff',
+        'application/xml',
+        'message/rfc822',
+    ]
 
-        if len(file_content) == 0:
-            can_display = False
-            error_msg = 'file is empty'
-            line_numbers = 0
-        else:
-            line_count += 1
-            line_numbers = '\n'.join([
+    mimetype, encoding = mimetypes.guess_type(path, strict=False)
+
+    if not mimetype or encoding:
+        return 'binary'
+    elif mimetype[:5] == 'text/' or mimetype in MIMETYPES_TEXT:
+        return 'text'
+    elif mimetype[:6] in 'image/':
+        return 'image'
+    elif mimetype[:6] == 'audio/':
+        return 'audio'
+    elif mimetype[:6] == 'video/':
+        return 'video'
+    elif mimetype == 'application/pdf':
+        return 'pdf'
+    else:
+        return 'binary'
+
+
+def file_serve(app, path):
+    kwargs = {
+        'path': path,
+        'crumbs': path_crumbs(app, path),
+        'dl_url': app.get_url('dl', path=path),
+    }
+
+    can_display = False
+    error_message = 'the contents cannot be displayed'
+    display_type = file_guess_display_type(path)
+    display_kwargs = {}
+
+    if display_type == 'binary':
+        display_kwargs = {}
+    elif display_type == 'text':
+        try:
+            file_content = path.read_text()
+            line_count = file_content.count('\n')
+
+            if len(file_content) == 0:
+                error_message = 'file is empty'
+            else:
+                line_count += 1
+
+            can_display = True
+            error_message = None
+            display_kwargs['file_content'] = file_content
+            display_kwargs['line_numbers'] = '\n'.join([
                 f'{number}.'
                 for number in range(1, line_count + 1)
             ])
-    except UnicodeDecodeError:
-        file_content = None
-        line_numbers = None
-        can_display = False
-        error_msg = 'the contents of the file cannot be displayed'
+        except UnicodeDecodeError:
+            pass
+    elif display_type in ['image', 'audio', 'video', 'pdf']:
+        can_display = True
+        error_message = None
+        display_kwargs['url'] = app.get_url('dl', path=path)
+    else:
+        raise NotImplementedError(display_type)
 
-    return app.templates['file.html'].render(
-        path=path,
-        crumbs=path_crumbs(app, path),
-        dl_url=app.get_url('dl', path=path),
-        can_display=can_display,
-        error_msg=error_msg,
-        line_numbers=line_numbers,
-        file_content=file_content,
-    )
+    kwargs.update({
+        'can_display': can_display,
+        'error_message': error_message,
+        'display_type': display_type,
+        'display_kwargs': display_kwargs,
+    })
+
+    return app.templates['file.html'].render(**kwargs)
+
 
 
 def app_build(opts):

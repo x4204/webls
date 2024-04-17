@@ -11,15 +11,45 @@
   <body>
     % include('crumbs.html')
     % if can_display:
-      <main class="pre-container">
-        <pre>
-          <div class="line-numbers">{{line_numbers}}</div>
-          <div class="lines">{{file_content}}</div>
-        </pre>
-      </main>
+      % if display_type == 'text':
+        <main class="text-container">
+          <pre>
+            <div class="line-numbers">{{display_kwargs['line_numbers']}}</div>
+            <div class="file-content">{{display_kwargs['file_content']}}</div>
+          </pre>
+        </main>
+      % elif display_type == 'image':
+        <main class="image-container">
+          <img src="{{display_kwargs['url']}}" />
+        </main>
+      % elif display_type == 'audio':
+        <main class="audio-container">
+          <audio controls src="{{display_kwargs['url']}}"></audio>
+        </main>
+        <script>
+          (function() {
+            document.querySelector('audio').volume = 0.5;
+          })();
+        </script>
+      % elif display_type == 'video':
+        <main class="video-container">
+          <video controls><source src="{{display_kwargs['url']}}" /></video>
+        </main>
+        <script>
+          (function() {
+            document.querySelector('video').volume = 0.5;
+          })();
+        </script>
+      % elif display_type == 'pdf':
+        <main class="pdf-container">
+          <embed src="{{display_kwargs['url']}}" />
+        </main>
+      % else:
+        <% raise NotImplementedError(display_type) %>
+      % end
     % else:
       <main class="warning">
-        <div class="message">{{error_msg}}</div>
+        <div class="message">{{error_message}}</div>
       </main>
     % end
   </body>

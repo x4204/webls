@@ -28,19 +28,20 @@ python -m webls --help
 
 ## TODO
 
-- in-browser file preview:
-  - based on mimetype (pdf, png, jpg, etc.)
-
-- cover with tests
-
-- security
-  - search for url attacks + symlink traversal; analyze; try to secure agains
-    these kinds of attacks (also see `bottle.static_file`)
-
 - `webls.py`
   - handle other cases besides `is_dir()` and `is_file()`
 
-- syntax highlighting
+- handle directory names with special characters (`asd?`, `asd#`, etc.)
+  - currently 404 is returned
 
-- download
-  - support downloading a directory (with confirmation; zip)
+- cover with tests
+
+- check if it looks ok in other browsers
+
+- security
+  - search for url attacks + symlink traversal; analyze; try to secure against
+    these kinds of attacks (also see `bottle.static_file`)
+
+- support downloading a directory (with confirmation; zip)
+
+- ?syntax highlighting for text files
