@@ -28,8 +28,7 @@ python -m webls --help
 
 ## TODO
 
-- `webls.py`
-  - handle other cases besides `is_dir()` and `is_file()`
+- do not display text file in the browser if too big (>1mb)
 
 - handle directory names with special characters (`asd?`, `asd#`, etc.)
   - currently 404 is returned

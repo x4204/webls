@@ -96,27 +96,50 @@ def path_crumbs(app, path):
 
 
 def dir_read_entries(app, path):
-    entries = list(path.iterdir())
+    try:
+        entries = list(path.iterdir())
+    except PermissionError:
+        entries = []
 
     entries.sort(key=dir_entry_sort_key)
     for idx, entry in enumerate(entries):
-        entry_stat = entry.stat()
+        entry_stat = entry.stat(follow_symlinks=False)
         entries[idx] = {
             'is_dir': False,
+            'is_symlink': False,
             'mode': stat.filemode(entry_stat.st_mode),
             'size_bytes': entry_stat.st_size,
             'size_pretty': size_pretty(entry_stat.st_size),
             'name': entry.name,
             'url': app.get_url('fs', path=entry),
             'dl_url': app.get_url('dl', path=entry),
-            'link_class': 'is-file',
+            'entry_class': 'is-file',
+            'symlink_path': None,
+            'symlink_class': 'is-file',
         }
 
         if entry.is_dir():
             entries[idx]['is_dir'] = True
             entries[idx]['name'] += '/'
             entries[idx]['url'] += '/'
-            entries[idx]['link_class'] = 'is-dir'
+            entries[idx]['entry_class'] = 'is-dir'
+            entries[idx]['symlink_class'] = 'is-dir'
+        elif entry.is_socket():
+            entries[idx]['entry_class'] = 'is-socket'
+        elif entry.is_fifo():
+            entries[idx]['entry_class'] = 'is-fifo'
+        elif entry.is_char_device():
+            entries[idx]['entry_class'] = 'is-char-device'
+        elif entry.is_block_device():
+            entries[idx]['entry_class'] = 'is-block-device'
+
+        if entry.is_symlink():
+            entries[idx]['is_symlink'] = True
+            entries[idx]['symlink_path'] = entry.readlink()
+            if entry.exists():
+                entries[idx]['entry_class'] = 'is-symlink'
+            else:
+                entries[idx]['entry_class'] = 'is-symlink-broken'
 
     return entries
 
@@ -150,9 +173,14 @@ def file_guess_display_type(path):
         'message/rfc822',
     ]
 
+    if path.is_symlink():
+        path = path.readlink()
+
     mimetype, encoding = mimetypes.guess_type(path, strict=False)
 
-    if not mimetype or encoding:
+    if not mimetype:
+        return 'text'
+    elif encoding:
         return 'binary'
     elif mimetype[:5] == 'text/' or mimetype in MIMETYPES_TEXT:
         return 'text'
@@ -179,6 +207,16 @@ def file_serve(app, path):
     error_message = 'the contents cannot be displayed'
     display_type = file_guess_display_type(path)
     display_kwargs = {}
+
+    is_forbidden_type = (
+        path.is_socket()
+        or path.is_fifo()
+        or path.is_char_device()
+        or path.is_block_device()
+    )
+
+    if is_forbidden_type:
+        bottle.abort(403)
 
     if display_type == 'binary':
         display_kwargs = {}
@@ -230,6 +268,20 @@ def app_build(opts):
 
     wrap_path = WrapPath()
 
+    @app.error(403)
+    def handler(error):
+        req = bottle.request
+        path = Path(req.path[4:])
+
+        if req.path[:4] not in ['/fs/', '/dl/']:
+            return f'forbidden: {req.method} {req.path}'
+        else:
+            return app.templates['forbidden.html'].render(
+                path=path,
+                crumbs=path_crumbs(app, path),
+                root_url=app.get_url('fs', path=''),
+            )
+
     @app.error(404)
     def handler(error):
         req = bottle.request
@@ -252,14 +304,15 @@ def app_build(opts):
     @app.route('/fs/', apply=wrap_path)
     @app.route('/fs/<path:path>', name='fs', apply=wrap_path)
     def handler(path):
+        if path.is_symlink() and not path.readlink().is_relative_to('.'):
+            bottle.abort(403)
+
         if path.is_dir():
             return dir_serve(app, path)
-        elif path.is_file():
+        elif path.exists():
             return file_serve(app, path)
-        elif not path.exists():
-            bottle.abort(404)
         else:
-            raise NotImplementedError('unknown file type')
+            bottle.abort(404)
 
     @app.route('/dl/', apply=wrap_path)
     @app.route('/dl/<path:path>', name='dl', apply=wrap_path)

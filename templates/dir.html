@@ -40,9 +40,13 @@
                   {{entry['size_pretty']}}
                 </td>
                 <td class="entry-name" title="{{entry['name']}}">
-                  <a class="{{entry['link_class']}}" href="{{entry['url']}}">
-                    {{entry['name']}}
-                  </a>
+                  <a class="{{entry['entry_class']}}" href="{{entry['url']}}">{{entry['name']}}</a>
+                  % if entry['is_symlink']:
+                    -&gt;
+                    <span class="{{entry['symlink_class']}} symlink-path">
+                     {{entry['symlink_path']}}
+                    <span>
+                  % end
                 </td>
                 <td class="entry-action">
                   % if not entry['is_dir']:

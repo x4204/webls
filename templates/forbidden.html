@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>webls: {{path}}</title>
+    <style>
+      % include('main.css')
+    </style>
+  </head>
+  <body>
+    % include('crumbs.html')
+    <main class="error">
+      <div class="message">forbidden</div>
+      <br>
+      <p class="path">{{path}}</p>
+      <br>
+      <a href="{{root_url}}">go to root</a>
+    </main>
+  </body>
+</html>

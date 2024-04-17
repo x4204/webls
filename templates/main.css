@@ -128,8 +128,25 @@ pre > .line-numbers {
   color: red;
 }
 
+.error {
+  flex: unset;
+  text-align: center;
+  background-color: #ffc0c0;
+  padding: 20px;
+}
+
+.error > .path {
+  color: red;
+}
+
 .is-dir,
-.is-file {
+.is-file,
+.is-symlink,
+.is-symlink-broken,
+.is-socket,
+.is-fifo,
+.is-char-device,
+.is-block-device {
   text-decoration: none;
 }
 
@@ -138,13 +155,43 @@ pre > .line-numbers {
   text-decoration: underline;
 }
 
+.symlink-path:hover {
+  text-decoration: none;
+}
+
+.is-dir,
+.is-symlink,
+.is-symlink-broken,
+.is-socket,
+.is-char-device,
+.is-block-device {
+  font-weight: bold;
+}
+
 .is-dir {
   color: #3465a4;
-  font-weight: bold;
 }
 
 .is-file {
   color: #181818;
+}
+
+.is-symlink {
+  color: #06989a;
+}
+
+.is-symlink-broken {
+  color: #ef2929;
+}
+
+.is-socket {
+  color: #75507b;
+}
+
+.is-fifo,
+.is-char-device,
+.is-block-device {
+  color: #c4a000;
 }
 
 .entry:hover {
