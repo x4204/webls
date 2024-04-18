@@ -7,6 +7,11 @@ import stat
 from bottle import Bottle, SimpleTemplate, request as req
 from optparse import OptionParser
 from pathlib import Path
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_for_filename
+from pygments.lexers.special import TextLexer
+from pygments.util import ClassNotFound
 from urllib.parse import quote
 
 
@@ -225,11 +230,14 @@ def file_guess_display_type(path):
         'application/n-quads',
         'application/n-triples',
         'application/postscript',
+        'application/rls-services+xml',
         'application/rtf',
+        'application/sql',
         'application/trig',
         'application/vnd.google-earth.kml+xml',
         'application/x-csh',
         'application/x-latex',
+        'application/x-ruby',
         'application/x-sh',
         'application/x-shar',
         'application/x-tcl',
@@ -282,16 +290,16 @@ def file_serve_text_kwargs(kwargs):
         kwargs['warning_message'] = 'file is empty'
         return
 
-    line_count = file_content.count('\n') + 1
-    line_numbers = '\n'.join([
-        f'{number}.'
-        for number in range(1, line_count + 1)
-    ])
+    try:
+        lexer = get_lexer_for_filename(kwargs['fs_path'])
+    except ClassNotFound:
+        lexer = TextLexer()
+    formatter = HtmlFormatter(linenos=True)
+    highlighted = highlight(file_content, lexer, formatter)
 
     kwargs['can_display'] = True
     kwargs['warning_message'] = None
-    kwargs['display_kwargs']['file_content'] = file_content
-    kwargs['display_kwargs']['line_numbers'] = line_numbers
+    kwargs['display_kwargs']['highlighted'] = highlighted
 
 
 def file_serve_other_kwargs(app, kwargs):

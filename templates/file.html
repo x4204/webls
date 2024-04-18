@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>webls: {{path}}</title>
     <style>
+      % include('highlight.css')
+    </style>
+    <style>
       % include('main.css')
     </style>
   </head>
@@ -13,10 +16,7 @@
     % if can_display:
       % if display_type == 'text':
         <main class="text-container">
-          <pre>
-            <div class="line-numbers">{{display_kwargs['line_numbers']}}</div>
-            <div class="file-content">{{display_kwargs['file_content']}}</div>
-          </pre>
+          {{!display_kwargs['highlighted']}}
         </main>
       % elif display_type == 'image':
         <main class="image-container">
