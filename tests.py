@@ -53,8 +53,9 @@ class TestWebls(unittest.TestCase):
     def assert_crumbs(self, *crumbs):
         actual_crumbs = [
             {
-                'text': a.find('code').text,
+                'class': a.get('class'),
                 'url': a.get('href'),
+                'text': a.find('code').text,
             }
             for a in self.body.findall('.//nav/div[@class="crumbs"]//a')
         ]
@@ -179,8 +180,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./empty-dir/')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'empty-dir', 'url': '/fs/empty-dir/'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'empty-dir', 'url': '/fs/empty-dir/', 'class': 'is-dir'},
         )
         self.assert_warning(
             message='directory is empty',
@@ -193,7 +194,7 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
         )
         self.assert_entries(
             {
@@ -425,8 +426,12 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(404)
         self.assert_title('webls: ./inexisting.txt')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'inexisting.txt', 'url': '/fs/inexisting.txt'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {
+                'text': 'inexisting.txt',
+                'url': '/fs/inexisting.txt',
+                'class': 'is-file',
+            },
         )
         self.assert_warning(
             message='not found',
@@ -441,8 +446,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./empty.txt')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'empty.txt', 'url': '/fs/empty.txt'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'empty.txt', 'url': '/fs/empty.txt', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/empty.txt')
         self.assert_warning(
@@ -455,8 +460,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./large.txt')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'large.txt', 'url': '/fs/large.txt'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'large.txt', 'url': '/fs/large.txt', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/large.txt')
         self.assert_warning(
@@ -469,8 +474,12 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./Lato-Regular.ttf')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'Lato-Regular.ttf', 'url': '/fs/Lato-Regular.ttf'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {
+                'text': 'Lato-Regular.ttf',
+                'url': '/fs/Lato-Regular.ttf',
+                'class': 'is-file',
+            },
         )
         self.assert_dl_btn('/dl/Lato-Regular.ttf')
         self.assert_warning(
@@ -483,8 +492,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./lorem.txt')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'lorem.txt', 'url': '/fs/lorem.txt'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'lorem.txt', 'url': '/fs/lorem.txt', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/lorem.txt')
         self.assert_text(
@@ -498,8 +507,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./image.jpg')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'image.jpg', 'url': '/fs/image.jpg'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'image.jpg', 'url': '/fs/image.jpg', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/image.jpg')
         self.assert_image('/dl/image.jpg')
@@ -510,8 +519,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./audio.mp3')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'audio.mp3', 'url': '/fs/audio.mp3'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'audio.mp3', 'url': '/fs/audio.mp3', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/audio.mp3')
         self.assert_audio('/dl/audio.mp3')
@@ -522,8 +531,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./video.mp4')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'video.mp4', 'url': '/fs/video.mp4'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'video.mp4', 'url': '/fs/video.mp4', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/video.mp4')
         self.assert_video('/dl/video.mp4')
@@ -534,8 +543,12 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./document.pdf')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'document.pdf', 'url': '/fs/document.pdf'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {
+                'text': 'document.pdf',
+                'url': '/fs/document.pdf',
+                'class': 'is-file',
+            },
         )
         self.assert_dl_btn('/dl/document.pdf')
         self.assert_pdf('/dl/document.pdf')
@@ -546,8 +559,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(200)
         self.assert_title('webls: ./photo.jpg')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'photo.jpg', 'url': '/fs/photo.jpg'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'photo.jpg', 'url': '/fs/photo.jpg', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/photo.jpg')
         self.assert_image('/dl/photo.jpg')
@@ -558,8 +571,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(404)
         self.assert_title('webls: ./broken.txt')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'broken.txt', 'url': '/fs/broken.txt'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'broken.txt', 'url': '/fs/broken.txt', 'class': 'is-file'},
         )
         self.assert_warning(
             message='not found',
@@ -618,8 +631,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(404)
         self.assert_title('webls: ./empty-dir')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'empty-dir', 'url': '/fs/empty-dir/'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'empty-dir', 'url': '/fs/empty-dir/', 'class': 'is-dir'},
         )
         self.assert_warning(
             message='not found',
@@ -634,8 +647,8 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(404)
         self.assert_title('webls: ./image.jpg/')
         self.assert_crumbs(
-            {'text': '.', 'url': '/fs/'},
-            {'text': 'image.jpg', 'url': '/fs/image.jpg'},
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'image.jpg', 'url': '/fs/image.jpg', 'class': 'is-file'},
         )
         self.assert_warning(
             message='not found',

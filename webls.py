@@ -149,8 +149,9 @@ def url_path_crumbs(app, url_path):
             'link_class': 'is-file',
         }
 
-        if fs_path.is_dir() and not is_root:
-            crumbs[idx]['url'] += '/'
+        if fs_path.is_dir():
+            if not is_root:
+                crumbs[idx]['url'] += '/'
             crumbs[idx]['link_class'] = 'is-dir'
 
         if is_root:
