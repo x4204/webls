@@ -423,6 +423,7 @@ def option_parser_build():
         '--host',
         help='bind to this host (default: 127.0.0.1)',
         dest='host',
+        metavar='HOST',
         type='string',
         default='127.0.0.1',
     )
@@ -430,13 +431,15 @@ def option_parser_build():
         '--port',
         help='bind to this port (default: 8080)',
         dest='port',
+        metavar='PORT',
         type='int',
         default=8080,
     )
     option_parser.add_option(
         '--root',
         help='serve this directory (default: .)',
-        dest='root',
+        dest='fs_root',
+        metavar='ROOT',
         type='string',
         default='.',
     )
@@ -465,7 +468,7 @@ def main():
     app = app_build(
         development=opts.development,
         root=Path('.').absolute(),
-        fs_root=Path(opts.root).absolute(),
+        fs_root=Path(opts.fs_root).absolute(),
     )
     kwargs = run_kwargs(opts)
 
