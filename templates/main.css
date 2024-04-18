@@ -82,12 +82,16 @@ table.dir-listing tbody > tr:nth-of-type(even) {
   background-color: transparent;
 }
 
-div.linenodiv pre {
+.highlight div.linenodiv pre {
   color: #b5b5b5;
 }
 
-div.linenodiv span:after {
+.highlight div.linenodiv span:after {
   content: ".";
+}
+
+.highlight .err {
+  border: none;
 }
 
 .image-container,
