@@ -4,7 +4,7 @@ import mimetypes
 import os
 import stat
 
-from bottle import Bottle, SimpleTemplate
+from bottle import Bottle, SimpleTemplate, request as req
 from optparse import OptionParser
 from pathlib import Path
 from urllib.parse import quote
@@ -36,16 +36,68 @@ class Templates:
 class WrapPath:
     api = 2
 
+    def __init__(self, *, fs_root):
+        self.fs_root = fs_root
+
     def apply(self, callback, route):
         @functools.wraps(callback)
         def wrapper(*args, **kwargs):
-            if 'path' in kwargs:
-                kwargs['path'] = Path(kwargs['path'])
+            if 'url_path' in kwargs:
+                kwargs['url_path'] = './' + kwargs['url_path']
+                kwargs['fs_path'] = self.fs_root.joinpath(kwargs['url_path'])
             else:
-                kwargs['path'] = Path('.')
+                kwargs['url_path'] = './'
+                kwargs['fs_path'] = self.fs_root.joinpath('.')
             return callback(*args, **kwargs)
 
         return wrapper
+
+
+class CheckPath:
+    api = 2
+
+    def __init__(self, *, fs_root):
+        self.fs_root = fs_root
+
+    def apply(self, callback, route):
+
+        @functools.wraps(callback)
+        def wrapper(*args, **kwargs):
+            url_path = kwargs['url_path']
+            fs_path = kwargs['fs_path']
+
+            if self.dir_trailing_slash(url_path, fs_path):
+                bottle.abort(404)
+
+            if self.is_forbidden(self.fs_root, fs_path):
+                bottle.abort(403)
+
+            return callback(*args, **kwargs)
+
+        return wrapper
+
+    def dir_trailing_slash(self, url_path, fs_path):
+        has_trailing_slash = url_path.endswith('/')
+        is_dir = fs_path.is_dir()
+
+        return (
+            (has_trailing_slash and not is_dir)
+            or (not has_trailing_slash and is_dir)
+        )
+
+    def is_forbidden(self, root, path):
+        is_outside_root = (
+            path.is_symlink()
+            and not path.resolve().is_relative_to(root)
+        )
+
+        return (
+            is_outside_root
+            or path.is_socket()
+            or path.is_fifo()
+            or path.is_char_device()
+            or path.is_block_device()
+        )
 
 
 def dir_entry_sort_key(path):
@@ -71,45 +123,51 @@ def size_pretty(size):
         return f'{size:.1f}{units[idx]}'
 
 
-def get_url(app, name, path):
-    path = quote(str(path))
+def get_url(app, name, url_path):
+    path = quote(str(url_path))
 
-    return app.get_url(name, path=path)
+    return app.get_url(name, url_path=url_path)
 
 
-def path_crumbs(app, path):
+def url_path_crumbs(app, url_path):
+    assert isinstance(url_path, str)
+
+    path = Path(url_path)
     crumbs = [path] + list(path.parents)
 
     crumbs.reverse()
     if len(crumbs) == 1:
         crumbs = [Path('.')]
 
-    for idx, path in enumerate(crumbs):
-        if path == Path('.'):
-            name = '.'
-        else:
-            name = path.name
+    for idx, crumb_path in enumerate(crumbs):
+        fs_path = app.fs_root.joinpath(crumb_path)
+        is_root = crumb_path == Path('.')
 
         crumbs[idx] = {
-            'name': name,
-            'url': get_url(app, 'fs', path),
+            'name': crumb_path.name,
+            'url': get_url(app, 'fs', crumb_path),
             'link_class': 'is-file',
         }
 
-        if path.is_dir():
+        if fs_path.is_dir() and not is_root:
+            crumbs[idx]['url'] += '/'
             crumbs[idx]['link_class'] = 'is-dir'
+
+        if is_root:
+            crumbs[idx]['name'] = '.'
 
     return crumbs
 
 
-def dir_read_entries(app, path):
+def dir_read_entries(app, fs_path):
     try:
-        entries = list(path.iterdir())
+        entries = list(fs_path.iterdir())
     except PermissionError:
         entries = []
 
     entries.sort(key=dir_entry_sort_key)
     for idx, entry in enumerate(entries):
+        url_path = entry.relative_to(fs_path)
         entry_stat = entry.stat(follow_symlinks=False)
         entries[idx] = {
             'is_dir': False,
@@ -118,8 +176,8 @@ def dir_read_entries(app, path):
             'size_bytes': entry_stat.st_size,
             'size_pretty': size_pretty(entry_stat.st_size),
             'name': entry.name,
-            'url': get_url(app, 'fs', entry),
-            'dl_url': get_url(app, 'dl', entry),
+            'url': get_url(app, 'fs', url_path),
+            'dl_url': get_url(app, 'dl', url_path),
             'entry_class': 'is-file',
             'symlink_path': None,
             'symlink_class': 'is-file',
@@ -151,11 +209,11 @@ def dir_read_entries(app, path):
     return entries
 
 
-def dir_serve(app, path):
+def dir_serve(app, url_path, fs_path):
     return app.templates['dir.html'].render(
-        path=path,
-        crumbs=path_crumbs(app, path),
-        entries=dir_read_entries(app, path),
+        path=url_path,
+        crumbs=url_path_crumbs(app, url_path),
+        entries=dir_read_entries(app, fs_path),
     )
 
 
@@ -207,7 +265,7 @@ def file_guess_display_type(path):
 def file_serve_text_kwargs(kwargs):
     ONE_MIB = 1 << 20
 
-    file_size = kwargs['path'].stat().st_size
+    file_size = kwargs['fs_path'].stat().st_size
     file_size_pretty = size_pretty(file_size)
 
     if file_size > ONE_MIB:
@@ -215,7 +273,7 @@ def file_serve_text_kwargs(kwargs):
         return
 
     try:
-        file_content = kwargs['path'].read_text()
+        file_content = kwargs['fs_path'].read_text()
     except UnicodeDecodeError:
         return
 
@@ -241,30 +299,15 @@ def file_serve_other_kwargs(app, kwargs):
     kwargs['display_kwargs']['url'] = get_url(app, 'dl', kwargs['path'])
 
 
-def path_is_forbidden(path):
-    root = Path('.').absolute()
-    is_outside_root = (
-        path.is_symlink()
-        and not path.resolve().is_relative_to(root)
-    )
-
-    return (
-        is_outside_root
-        or path.is_socket()
-        or path.is_fifo()
-        or path.is_char_device()
-        or path.is_block_device()
-    )
-
-
-def file_serve(app, path):
+def file_serve(app, url_path, fs_path):
     kwargs = {
-        'path': path,
-        'crumbs': path_crumbs(app, path),
-        'dl_url': get_url(app, 'dl', path),
+        'path': url_path,
+        'fs_path': fs_path,
+        'crumbs': url_path_crumbs(app, url_path),
+        'dl_url': get_url(app, 'dl', url_path),
         'can_display': False,
         'warning_message': 'the contents cannot be displayed',
-        'display_type': file_guess_display_type(path),
+        'display_type': file_guess_display_type(fs_path),
         'display_kwargs': {},
     }
 
@@ -280,75 +323,80 @@ def file_serve(app, path):
     return app.templates['file.html'].render(**kwargs)
 
 
-def error_serve(app, error, template_name, message):
-    req = bottle.request
-    path = Path(req.path[4:])
-
+def error_serve(app, template_name, message):
     if req.path[:4] != '/fs/':
         return f'{message}: {req.method} {req.path}'
-    else:
-        return app.templates[template_name].render(
-            path=path,
-            crumbs=path_crumbs(app, path),
-            root_url=get_url(app, 'fs', ''),
-        )
+
+    url_path = './' + req.path[4:]
+    fs_path = Path(url_path)
+
+    return app.templates[template_name].render(
+        path=url_path,
+        crumbs=url_path_crumbs(app, url_path),
+        root_url=get_url(app, 'fs', ''),
+    )
 
 
-def app_build(*, development):
+def static_file_kwargs(fs_path):
+    mimetype, encoding = mimetypes.guess_type(fs_path)
+    interpret_as_octet_stream = (
+        mimetype is None
+        or mimetype[:5] == 'text/'
+    )
+
+    if not interpret_as_octet_stream:
+        return {}
+
+    return {
+        'mimetype': 'application/octet-stream',
+        'download': True,
+    }
+
+
+def app_build(*, development, root, fs_root):
     app = Bottle()
 
-    app.path = Path('.').absolute()
+    app.root = root
+    app.fs_root = fs_root
+
     app.templates = Templates(
-        path=app.path.joinpath('templates/'),
+        path=app.root.joinpath('templates/'),
         fresh=development,
     )
 
-    wrap_path = WrapPath()
+    wrap_path = WrapPath(fs_root=app.fs_root)
+    check_path = CheckPath(fs_root=app.fs_root)
 
     @app.error(403)
     def handler(error):
-        return error_serve(app, error, 'forbidden.html', 'forbidden')
+        return error_serve(app, 'forbidden.html', 'forbidden')
 
     @app.error(404)
     def handler(error):
-        return error_serve(app, error, 'not_found.html', 'not found')
+        return error_serve(app, 'not_found.html', 'not found')
 
     @app.route('/')
     @app.route('/fs')
     def handler():
         bottle.redirect(get_url(app, 'fs', ''))
 
-    @app.route('/fs/', apply=wrap_path)
-    @app.route('/fs/<path:path>', name='fs', apply=wrap_path)
-    def handler(path):
-        if path_is_forbidden(path):
-            bottle.abort(403)
-
-        if path.is_dir():
-            return dir_serve(app, path)
-        elif path.exists():
-            return file_serve(app, path)
+    @app.route('/fs/', apply=[wrap_path, check_path])
+    @app.route('/fs/<url_path:path>', name='fs', apply=[wrap_path, check_path])
+    def handler(url_path, fs_path):
+        if fs_path.is_dir():
+            return dir_serve(app, url_path, fs_path)
+        elif fs_path.exists():
+            return file_serve(app, url_path, fs_path)
         else:
             bottle.abort(404)
 
-    @app.route('/dl/', apply=wrap_path)
-    @app.route('/dl/<path:path>', name='dl', apply=wrap_path)
-    def handler(path):
-        if path_is_forbidden(path):
-            bottle.abort(403)
+    @app.route('/dl/', apply=[wrap_path, check_path])
+    @app.route('/dl/<url_path:path>', name='dl', apply=[wrap_path, check_path])
+    def handler(url_path, fs_path):
+        path = str(fs_path.relative_to(app.fs_root))
+        kwargs = static_file_kwargs(fs_path)
 
-        mimetype, encoding = mimetypes.guess_type(path)
-        interpret_as_octet_stream = (
-            mimetype is None
-            or mimetype[:5] == 'text/'
-        )
-        kwargs = {}
-
-        if interpret_as_octet_stream:
-            kwargs['mimetype'] = 'application/octet-stream'
-            kwargs['download'] = True
-
-        return bottle.static_file(str(path), root='.', **kwargs)
+        return bottle.static_file(path,root=app.fs_root, **kwargs)
 
     return app
 
@@ -365,14 +413,6 @@ def run_kwargs(opts):
         kwargs['debug'] = True
 
     return kwargs
-
-
-def app_chdir(opts):
-    dev = opts.development
-    child = bool(os.getenv('BOTTLE_CHILD'))
-
-    if not dev or (dev and child):
-        os.chdir(opts.root)
 
 
 def option_parser_build():
@@ -421,10 +461,13 @@ def main():
     option_parser = option_parser_build()
     opts, _ = option_parser.parse_args()
 
-    app = app_build(development=opts.development)
+    app = app_build(
+        development=opts.development,
+        root=Path('.').absolute(),
+        fs_root=Path(opts.root).absolute(),
+    )
     kwargs = run_kwargs(opts)
 
-    app_chdir(opts)
     app.run(**kwargs)
 
 

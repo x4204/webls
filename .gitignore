@@ -1,3 +1,8 @@
 __pycache__
 
 /.venv
+
+/demo/empty-dir
+/demo/char_device
+/demo/fifo
+/demo/unix.sock

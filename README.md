@@ -19,6 +19,11 @@ virtualenv .venv --python $(which python3.12)
 pip install -r requirements.txt
 ```
 
+- setup demo directory
+```
+bash setupdemo.sh
+```
+
 - run tests
 ```
 python -m tests -v
@@ -31,9 +36,6 @@ python -m webls
 ```
 
 ## TODO
-
-- ?avoid using chdir
-  - easier to test
 
 - security
   - search for url attacks + symlink traversal; analyze; try to secure against
