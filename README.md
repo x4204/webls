@@ -19,22 +19,36 @@ virtualenv .venv --python $(which python3.12)
 pip install -r requirements.txt
 ```
 
-## Running
-
+- run tests
 ```
-python -m webls
+python -m tests -v
+```
+
+- run app
+```
 python -m webls --help
+python -m webls
 ```
 
 ## TODO
 
-- cover with tests
-  - https://bottlepy.org/docs/dev/recipes.html#unit-testing-bottle-applications
+- ?avoid using chdir
+  - easier to test
 
 - security
   - search for url attacks + symlink traversal; analyze; try to secure against
     these kinds of attacks (also see `bottle.static_file`)
 
-- support downloading a directory (with confirmation; zip)
+- syntax highlighting for text files
+  - https://pygments.org/
 
-- ?syntax highlighting for text files
+- build a demo docker image
+  - different mime types (text (different programming languages), image, audio,
+    video, pdf)
+  - empty text files, big text files
+  - different file types (dir, file, symlink, broken symlink, socket, etc)
+
+- ?migrate to werkzeug
+  - https://werkzeug.palletsprojects.com/en/3.0.x/
+
+- ?support downloading a directory (with confirmation; zip)

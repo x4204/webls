@@ -211,7 +211,7 @@ def file_serve_text_kwargs(kwargs):
     file_size_pretty = size_pretty(file_size)
 
     if file_size > ONE_MIB:
-        kwargs['warning_message'] = f'file is too big ({file_size_pretty})'
+        kwargs['warning_message'] = f'file is too large ({file_size_pretty})'
         return
 
     try:
@@ -235,23 +235,29 @@ def file_serve_text_kwargs(kwargs):
     kwargs['display_kwargs']['line_numbers'] = line_numbers
 
 
-def file_serve_other_kwargs(kwargs):
+def file_serve_other_kwargs(app, kwargs):
     kwargs['can_display'] = True
     kwargs['warning_message'] = None
     kwargs['display_kwargs']['url'] = get_url(app, 'dl', kwargs['path'])
 
 
-def file_serve(app, path):
-    is_forbidden_type = (
-        path.is_socket()
+def path_is_forbidden(path):
+    root = Path('.').absolute()
+    is_outside_root = (
+        path.is_symlink()
+        and not path.resolve().is_relative_to(root)
+    )
+
+    return (
+        is_outside_root
+        or path.is_socket()
         or path.is_fifo()
         or path.is_char_device()
         or path.is_block_device()
     )
 
-    if is_forbidden_type:
-        bottle.abort(403)
 
+def file_serve(app, path):
     kwargs = {
         'path': path,
         'crumbs': path_crumbs(app, path),
@@ -267,7 +273,7 @@ def file_serve(app, path):
     elif kwargs['display_type'] == 'text':
         file_serve_text_kwargs(kwargs)
     elif kwargs['display_type'] in ['image', 'audio', 'video', 'pdf']:
-        file_serve_other_kwargs(kwargs)
+        file_serve_other_kwargs(app, kwargs)
     else:
         raise NotImplementedError(kwargs['display_type'])
 
@@ -288,13 +294,13 @@ def error_serve(app, error, template_name, message):
         )
 
 
-def app_build(opts):
+def app_build(*, development):
     app = Bottle()
 
     app.path = Path('.').absolute()
     app.templates = Templates(
         path=app.path.joinpath('templates/'),
-        fresh=opts.development,
+        fresh=development,
     )
 
     wrap_path = WrapPath()
@@ -307,7 +313,6 @@ def app_build(opts):
     def handler(error):
         return error_serve(app, error, 'not_found.html', 'not found')
 
-
     @app.route('/')
     @app.route('/fs')
     def handler():
@@ -316,7 +321,7 @@ def app_build(opts):
     @app.route('/fs/', apply=wrap_path)
     @app.route('/fs/<path:path>', name='fs', apply=wrap_path)
     def handler(path):
-        if path.is_symlink() and not path.readlink().is_relative_to('.'):
+        if path_is_forbidden(path):
             bottle.abort(403)
 
         if path.is_dir():
@@ -329,6 +334,9 @@ def app_build(opts):
     @app.route('/dl/', apply=wrap_path)
     @app.route('/dl/<path:path>', name='dl', apply=wrap_path)
     def handler(path):
+        if path_is_forbidden(path):
+            bottle.abort(403)
+
         mimetype, encoding = mimetypes.guess_type(path)
         interpret_as_octet_stream = (
             mimetype is None
@@ -409,12 +417,16 @@ def option_parser_build():
     return option_parser
 
 
-if __name__ == '__main__':
+def main():
     option_parser = option_parser_build()
     opts, _ = option_parser.parse_args()
 
-    app = app_build(opts)
+    app = app_build(development=opts.development)
     kwargs = run_kwargs(opts)
 
     app_chdir(opts)
     app.run(**kwargs)
+
+
+if __name__ == '__main__':
+    main()
