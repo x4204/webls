@@ -209,6 +209,17 @@ class TestWebls(unittest.TestCase):
                 'action': {},
             },
             {
+                'mode': {'text': 'drwxrwxr-x'},
+                'size': {'text': '4.0K', 'title': '4096 bytes'},
+                'name': {
+                    'class': 'is-dir',
+                    'href': '/fs/nested/',
+                    'text': 'nested/',
+                    'title': 'nested/',
+                },
+                'action': {},
+            },
+            {
                 'mode': {'text': '-rw-rw-r--'},
                 'size': {'text': '73.4K', 'title': '75152 bytes'},
                 'name': {

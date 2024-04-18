@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 - setup demo directory
 ```
-bash setupdemo.sh
+sudo bash setupdemo.sh
 ```
 
 - run tests
@@ -35,20 +35,26 @@ python -m webls --help
 python -m webls
 ```
 
-## TODO
+## Docker
 
-- security
-  - search for url attacks + symlink traversal; analyze; try to secure against
-    these kinds of attacks (also see `bottle.static_file`)
+- build image
+```
+docker build -t webls:local .
+```
+
+- run container
+```
+docker run --rm --network=host webls:local
+```
+
+## TODO
 
 - syntax highlighting for text files
   - https://pygments.org/
 
-- build a demo docker image
-  - different mime types (text (different programming languages), image, audio,
-    video, pdf)
-  - empty text files, big text files
-  - different file types (dir, file, symlink, broken symlink, socket, etc)
+- security
+  - search for url attacks + symlink traversal; analyze; try to secure against
+    these kinds of attacks (also see `bottle.static_file`)
 
 - ?migrate to werkzeug
   - https://werkzeug.palletsprojects.com/en/3.0.x/

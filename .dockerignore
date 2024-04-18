@@ -1,0 +1,14 @@
+__pycache__
+
+/.git
+/.venv
+
+/.dockerignore
+/.gitignore
+/Dockerfile
+/tests.py
+
+/demo/char_device
+/demo/empty-dir
+/demo/fifo
+/demo/unix.sock
