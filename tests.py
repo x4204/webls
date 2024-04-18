@@ -420,6 +420,44 @@ class TestWebls(unittest.TestCase):
             },
         )
 
+    def test_fs_nested_dir_entries(self):
+        self.get('/fs/nested/')
+
+        self.assert_status_code(200)
+        self.assert_title('webls: ./nested/')
+        self.assert_crumbs(
+            {'text': '.', 'url': '/fs/', 'class': 'is-dir'},
+            {'text': 'nested', 'url': '/fs/nested/', 'class': 'is-dir'},
+        )
+        self.assert_entries(
+            {
+                'mode': {'text': 'drwxrwxr-x'},
+                'size': {'text': '4.0K', 'title': '4096 bytes'},
+                'name': {
+                    'class': 'is-dir',
+                    'href': '/fs/nested/level-1/',
+                    'text': 'level-1/',
+                    'title': 'level-1/',
+                },
+                'action': {},
+            },
+            {
+                'action': {
+                    'href': '/dl/nested/file.txt',
+                    'text': '&#8623;',
+                    'title': 'download',
+                },
+                'mode': {'text': '-rw-rw-r--'},
+                'name': {
+                    'class': 'is-file',
+                    'href': '/fs/nested/file.txt',
+                    'text': 'file.txt',
+                    'title': 'file.txt',
+                },
+                'size': {'text': '5B', 'title': '5 bytes'},
+            }
+        )
+
     def test_fs_inexisting_file(self):
         self.get('/fs/inexisting.txt')
 
