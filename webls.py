@@ -168,7 +168,7 @@ def dir_read_entries(app, fs_path):
 
     entries.sort(key=dir_entry_sort_key)
     for idx, entry in enumerate(entries):
-        url_path = entry.relative_to(fs_path)
+        url_path = entry.relative_to(app.fs_root)
         entry_stat = entry.stat(follow_symlinks=False)
         entries[idx] = {
             'is_dir': False,
