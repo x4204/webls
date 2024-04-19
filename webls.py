@@ -1,10 +1,9 @@
 import bottle
-import functools
 import mimetypes
 import os
 import stat
 
-from bottle import Bottle, SimpleTemplate, request as req
+from bottle import Bottle, SimpleTemplate, request as req, response as res
 from optparse import OptionParser
 from pathlib import Path
 from pygments import highlight
@@ -38,6 +37,32 @@ class Templates:
         return self.cache[name]
 
 
+class AddHeaders:
+    api = 2
+
+    def __init__(self):
+        self.csp_value = '; '.join([
+            "default-src 'self'",
+            "block-all-mixed-content",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "object-src 'none'",
+            "upgrade-insecure-requests",
+            "style-src 'nonce-23228fbd' 'nonce-f8f2ec78'",
+        ])
+
+    def apply(self, callback, route):
+        def wrapper(*args, **kwargs):
+            res.set_header('Cache-Control', 'no-store, max-age=0')
+            res.set_header('Content-Security-Policy', self.csp_value)
+            res.set_header('X-Content-Type-Options', 'nosniff')
+            res.set_header('X-Frame-Options', 'deny')
+
+            return callback(*args, **kwargs)
+
+        return wrapper
+
+
 class WrapPath:
     api = 2
 
@@ -45,7 +70,6 @@ class WrapPath:
         self.fs_root = fs_root
 
     def apply(self, callback, route):
-        @functools.wraps(callback)
         def wrapper(*args, **kwargs):
             if 'url_path' in kwargs:
                 kwargs['url_path'] = './' + kwargs['url_path']
@@ -67,8 +91,6 @@ class CheckPath:
         self.fs_root = fs_root
 
     def apply(self, callback, route):
-
-        @functools.wraps(callback)
         def wrapper(*args, **kwargs):
             url_path = kwargs['url_path']
             fs_path = kwargs['fs_path']
@@ -372,6 +394,8 @@ def app_build(*, development, root, fs_root):
         fresh=development,
     )
 
+    app.install(AddHeaders())
+
     wrap_path = WrapPath(fs_root=app.fs_root)
     check_path = CheckPath(fs_root=app.fs_root)
 
@@ -404,7 +428,7 @@ def app_build(*, development, root, fs_root):
         path = str(fs_path.relative_to(app.fs_root))
         kwargs = static_file_kwargs(fs_path)
 
-        return bottle.static_file(path,root=app.fs_root, **kwargs)
+        return bottle.static_file(path, root=app.fs_root, **kwargs)
 
     return app
 
