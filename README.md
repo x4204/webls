@@ -2,7 +2,7 @@
 
 Simple file browser over HTTP
 
-Demo: http://webls.x4204.xyz/fs/
+Demo: https://webls.x4204.xyz/fs/
 
 
 ## Prerequisites
