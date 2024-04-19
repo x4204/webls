@@ -1,14 +1,20 @@
 FROM python:3.12-alpine
 
-WORKDIR /app/
+ARG UID
+ARG GID
+
+RUN \
+  set -xe \
+  && addgroup -g $GID webls \
+  && adduser -D -u $UID -G webls webls
+
+WORKDIR /home/webls/
+USER webls
 
 COPY requirements.txt .
-
 RUN pip install -r requirements.txt
 
 COPY . .
-
-RUN sh setupstorage.sh
 
 EXPOSE 8080
 

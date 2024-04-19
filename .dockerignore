@@ -2,13 +2,9 @@ __pycache__
 
 /.git
 /.venv
+/storage/*
 
 /.dockerignore
 /.gitignore
 /Dockerfile
 /tests.py
-
-/storage/char_device
-/storage/empty-dir
-/storage/fifo
-/storage/unix.sock

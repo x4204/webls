@@ -42,7 +42,10 @@ python -m webls
 
 - build image
 ```
-docker build --tag webls:local .
+docker build \
+  --build-arg UID=$(id -u) \
+  --build-arg GID=$(id -g) \
+  --tag webls:local .
 ```
 
 - run container and serve a specific host directory
@@ -50,14 +53,12 @@ docker build --tag webls:local .
 docker run \
   --rm \
   --network=host \
-  --volume /path/to/dir:/app/storage \
+  --volume /path/to/dir:/home/webls/storage \
   webls:local
 ```
 
 
 ## TODO
-
-- run docker container as non-root user
 
 - ?migrate to werkzeug
   - https://werkzeug.palletsprojects.com/en/3.0.x/

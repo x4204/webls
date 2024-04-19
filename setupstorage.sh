@@ -1,5 +1,6 @@
 set -xe
 
+[[ -d storage ]] || mkdir storage
 [[ -d storage/empty-dir ]] || mkdir storage/empty-dir
 [[ -c storage/char_device ]] || mknod storage/char_device c 246 0
 [[ -p storage/fifo ]] || mkfifo storage/fifo
