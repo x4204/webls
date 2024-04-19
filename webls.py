@@ -49,10 +49,12 @@ class WrapPath:
         def wrapper(*args, **kwargs):
             if 'url_path' in kwargs:
                 kwargs['url_path'] = './' + kwargs['url_path']
-                kwargs['fs_path'] = self.fs_root.joinpath(kwargs['url_path'])
             else:
                 kwargs['url_path'] = './'
-                kwargs['fs_path'] = self.fs_root.joinpath('.')
+            kwargs['fs_path'] = (
+                self.fs_root.joinpath(kwargs['url_path']).resolve()
+            )
+
             return callback(*args, **kwargs)
 
         return wrapper
@@ -91,10 +93,7 @@ class CheckPath:
         )
 
     def is_forbidden(self, root, path):
-        is_outside_root = (
-            path.is_symlink()
-            and not path.resolve().is_relative_to(root)
-        )
+        is_outside_root = not path.is_relative_to(root)
 
         return (
             is_outside_root

@@ -40,7 +40,7 @@ class TestWebls(unittest.TestCase):
         self.assertEqual(status_code, actual_status_code)
 
     def assert_redirect(self, code, location):
-        actual_location = self.response.headers['Location']
+        actual_location = self.response.location
 
         self.assert_status_code(code)
         self.assertEqual(location, actual_location)
@@ -132,14 +132,18 @@ class TestWebls(unittest.TestCase):
     def assert_error(self, *args, **kwargs):
         self.assert_message('error', *args, **kwargs)
 
-    def assert_text(self, line_count, file_content):
-        line_numbers = '\n'.join([
-            f'{number}.'
-            for number in range(1, line_count + 1)
-        ])
+    def assert_text(self, line_count, file_path):
+        line_numbers = list(range(1, line_count + 1))
+        file_content = self.app.fs_root.joinpath(file_path).read_text()
 
-        actual_line_numbers = self.body.find('.//div[@class="line-numbers"]').text
-        actual_file_content = self.body.find('.//div[@class="file-content"]').text
+        if not file_content.endswith('\n'):
+            file_content += '\n'
+
+        linenos = self.body.findall('.//td[@class="linenos"]//span')
+        code = self.body.find('.//td[@class="code"]//pre')
+
+        actual_line_numbers = [int(span.text) for span in linenos]
+        actual_file_content = list(code.itertext())[0]
 
         self.assertEqual(line_numbers, actual_line_numbers)
         self.assertEqual(file_content, actual_file_content)
@@ -545,10 +549,7 @@ class TestWebls(unittest.TestCase):
             {'text': 'lorem.txt', 'url': '/fs/lorem.txt', 'class': 'is-file'},
         )
         self.assert_dl_btn('/dl/lorem.txt')
-        self.assert_text(
-            21,
-            self.app.fs_root.joinpath('lorem.txt').read_text()
-        )
+        self.assert_text(21, 'lorem.txt')
 
     def test_fs_image_file(self):
         self.get('/fs/image.jpg')
@@ -706,6 +707,39 @@ class TestWebls(unittest.TestCase):
             url_text='go to root',
         )
 
+    def test_fs_path_traversal_attack(self):
+        self.get('/fs/../../')
+
+        self.assert_status_code(403)
+        self.assert_error(
+            message='forbidden',
+            path='./../../',
+            url='/fs/',
+            url_text='go to root',
+        )
+
+    def test_fs_path_traversal_attack_encoded(self):
+        self.get('/fs/%2e%2e%2f%2e%2e%2f')
+
+        self.assert_status_code(403)
+        self.assert_error(
+            message='forbidden',
+            path='./../../',
+            url='/fs/',
+            url_text='go to root',
+        )
+
+    def test_fs_path_traversal_attack_double_encoded(self):
+        self.get('/fs/%252e%252e%252f%252e%252e%252f')
+
+        self.assert_status_code(404)
+        self.assert_warning(
+            message='not found',
+            path='./%2e%2e%2f%2e%2e%2f',
+            url='/fs/',
+            url_text='go to root',
+        )
+
     def test_dl_inexistent_file(self):
         self.get('/dl/inexisting.txt')
 
@@ -784,6 +818,33 @@ class TestWebls(unittest.TestCase):
         self.assert_status_code(404)
         self.assertEqual(
             'not found: GET /dl/image.jpg/',
+            self.response.text,
+        )
+
+    def test_dl_path_traversal_attack(self):
+        self.get('/dl/../../')
+
+        self.assert_status_code(403)
+        self.assertEqual(
+            'forbidden: GET /dl/../../',
+            self.response.text,
+        )
+
+    def test_fs_path_traversal_attack_encoded(self):
+        self.get('/dl/%2e%2e%2f%2e%2e%2f')
+
+        self.assert_status_code(403)
+        self.assertEqual(
+            'forbidden: GET /dl/../../',
+            self.response.text,
+        )
+
+    def test_fs_path_traversal_attack_double_encoded(self):
+        self.get('/dl/%252e%252e%252f%252e%252e%252f')
+
+        self.assert_status_code(404)
+        self.assertEqual(
+            'not found: GET /dl/%2e%2e%2f%2e%2e%2f',
             self.response.text,
         )
 

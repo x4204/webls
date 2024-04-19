@@ -2,6 +2,8 @@
 
 Simple file browser over HTTP
 
+Demo: http://webls.x4204.xyz/fs/
+
 
 ## Setup
 
@@ -20,7 +22,7 @@ virtualenv .venv --python $(which python3.12)
 pip install -r requirements.txt
 ```
 
-- setup demo directory
+- setup demo directory for development and testing
 ```
 sudo bash setupdemo.sh
 ```
@@ -43,19 +45,20 @@ python -m webls
 docker build -t webls:local .
 ```
 
-- run container
+- run container and serve the `demo/` directory
 ```
 docker run --rm --network=host webls:local
+```
+
+- run container and serve a specific host directory
+```
+docker run --rm --network=host --volume /path/to/dir:/app/demo webls:local
 ```
 
 
 ## TODO
 
-- security
-  - search for url attacks + symlink traversal; analyze; try to secure against
-    these kinds of attacks (also see `bottle.static_file`)
-
-- ?run docker container as non-root user
+- run docker container as non-root user
 
 - ?migrate to werkzeug
   - https://werkzeug.palletsprojects.com/en/3.0.x/
