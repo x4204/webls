@@ -46,7 +46,7 @@ class AddHeaders:
             "block-all-mixed-content",
             "form-action 'self'",
             "frame-ancestors 'none'",
-            "object-src 'none'",
+            "object-src 'self'",
             "upgrade-insecure-requests",
             "style-src 'nonce-23228fbd' 'nonce-f8f2ec78'",
         ])
