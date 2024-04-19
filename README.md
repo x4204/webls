@@ -22,9 +22,9 @@ virtualenv .venv --python $(which python3.12)
 pip install -r requirements.txt
 ```
 
-- setup demo directory for development and testing
+- setup `storage/` directory for development and testing
 ```
-sudo bash setupdemo.sh
+sudo bash setupstorage.sh
 ```
 
 - run tests
@@ -42,17 +42,16 @@ python -m webls
 
 - build image
 ```
-docker build -t webls:local .
-```
-
-- run container and serve the `demo/` directory
-```
-docker run --rm --network=host webls:local
+docker build --tag webls:local .
 ```
 
 - run container and serve a specific host directory
 ```
-docker run --rm --network=host --volume /path/to/dir:/app/demo webls:local
+docker run \
+  --rm \
+  --network=host \
+  --volume /path/to/dir:/app/storage \
+  webls:local
 ```
 
 

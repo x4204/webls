@@ -2,7 +2,7 @@ __pycache__
 
 /.venv
 
-/demo/char_device
-/demo/empty-dir
-/demo/fifo
-/demo/unix.sock
+/storage/char_device
+/storage/empty-dir
+/storage/fifo
+/storage/unix.sock

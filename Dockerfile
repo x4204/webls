@@ -8,8 +8,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-RUN sh setupdemo.sh
+RUN sh setupstorage.sh
 
 EXPOSE 8080
 
-CMD ["python", "-m", "webls", "--host", "0.0.0.0", "--root", "demo"]
+CMD ["python", "-m", "webls", "--host", "0.0.0.0", "--root", "storage"]

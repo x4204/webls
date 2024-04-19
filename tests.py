@@ -14,7 +14,7 @@ class TestWebls(unittest.TestCase):
         self.app = webls.app_build(
             development=False,
             root=Path('.').absolute(),
-            fs_root=Path('demo').absolute(),
+            fs_root=Path('storage').absolute(),
         )
         self.client = Client(self.app)
 
