@@ -1,0 +1,21 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
+license = "MIT"
+authors = [
+  "Roman Popa <rpopa.dp@gmail.com>",
+]
+
+[tool.poetry.dependencies]
+python = "~3.12"
+
+[tool.poetry.group.production.dependencies]
+bottle = "~0.12.0"
+pygments = "~2.17.0"
+
+[tool.poetry.group.test.dependencies]
+html5lib = "~1.1"
+werkzeug = "~3.0"

@@ -8,11 +8,11 @@ RUN \
   && addgroup -g $GID webls \
   && adduser -D -u $UID -G webls webls
 
-WORKDIR /home/webls/
+WORKDIR /app/
 USER webls
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY requirements/ requirements/
+RUN pip install -r requirements/production.txt
 
 COPY . .
 
